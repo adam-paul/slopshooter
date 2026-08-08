@@ -3,13 +3,21 @@
 		ai = 0,
 		mix = 0,
 		human = 0,
-		height = 6
-	}: { ai?: number; mix?: number; human?: number; height?: number } = $props();
+		height = 6,
+		label
+	}: { ai?: number; mix?: number; human?: number; height?: number; label?: string } = $props();
 
 	const total = $derived(ai + mix + human || 1);
 </script>
 
-<div class="bar" style="height:{height}px;border-radius:{height / 2}px" aria-hidden="true">
+<!-- Decorative by default; pass `label` where the bar is the only content (e.g. table cells). -->
+<div
+	class="bar"
+	style="height:{height}px;border-radius:{height / 2}px"
+	role={label ? 'img' : undefined}
+	aria-label={label}
+	aria-hidden={label ? undefined : true}
+>
 	<span style="background:var(--verdict-ai);width:{(100 * ai) / total}%"></span>
 	<span style="background:var(--verdict-mixed);width:{(100 * mix) / total}%"></span>
 	<span style="background:var(--verdict-human);width:{(100 * human) / total}%"></span>

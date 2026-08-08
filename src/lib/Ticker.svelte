@@ -8,17 +8,28 @@
 		ago: string;
 	}
 
-	let { items, duration = 40 }: { items: TickerItem[]; duration?: number } = $props();
+	let { items }: { items: TickerItem[] } = $props();
 
-	// Content is duplicated so the -50% translate loops seamlessly.
-	const loop = $derived([...items, ...items]);
+	// Tile the set until the band is comfortably wider than the viewport, then
+	// double it so the -50% translate loops seamlessly. Duration scales with the
+	// tiled length so scroll speed holds the design's cadence (~6 items / 40s)
+	// regardless of how many distinct items we were given.
+	const MIN_TILE = 12;
+	const base = $derived(
+		items.length === 0
+			? []
+			: Array.from({ length: Math.ceil(MIN_TILE / items.length) }, () => items).flat()
+	);
+	const loop = $derived([...base, ...base]);
+	const duration = $derived(base.length * (40 / 6));
 </script>
 
 {#if items.length > 0}
 	<div class="ticker">
 		<div class="track" style="animation-duration:{duration}s">
 			{#each loop as t, i (i)}
-				<span class="item">
+				<!-- Announce each distinct verdict once; the tiled/doubled copies are decor. -->
+				<span class="item" aria-hidden={i >= items.length ? true : undefined}>
 					<span class="verdict {verdictMeta(t.verdict).className}">▲ {verdictMeta(t.verdict).label}</span>
 					<span class="dim">@{t.tagger} → {t.target ? `@${t.target}` : 'a post'} · {t.ago}</span>
 				</span>
@@ -29,7 +40,7 @@
 
 <style>
 	.ticker {
-		border-top: 1px solid var(--line);
+		/* The hero above owns the top hairline (always rendered); we only add the bottom. */
 		border-bottom: 1px solid var(--line);
 		overflow: hidden;
 		background: var(--bg-1);

@@ -5,7 +5,7 @@
 	import Ticker from '$lib/Ticker.svelte';
 	import VerdictBadge from '$lib/VerdictBadge.svelte';
 	import VerdictSplitBar from '$lib/VerdictSplitBar.svelte';
-	import { formatScore, historyUrl, pctAi, profileUrl, timeAgo, tweetUrl } from '$lib/format';
+	import { formatCount, formatScore, historyUrl, pctAi, profileUrl, timeAgo, tweetUrl } from '$lib/format';
 	import type { PageData } from './$types';
 
 	let { data }: { data: PageData } = $props();
@@ -30,7 +30,8 @@
 	function submitSearch(e: SubmitEvent) {
 		e.preventDefault();
 		const handle = search.trim().replace(/^@/, '');
-		if (handle) goto(`/u/${handle}`);
+		// X handle grammar — rejects junk that could only 404 or break the route.
+		if (/^[A-Za-z0-9_]{1,15}$/.test(handle)) goto(`/u/${handle}`);
 	}
 </script>
 
@@ -54,7 +55,7 @@
 		</p>
 		<div class="statrow">
 			<StatBlock
-				value={data.totals.checks.toLocaleString()}
+				value={formatCount(data.totals.checks)}
 				label="checks tracked"
 				accent="var(--verdict-ai)"
 			/>
@@ -64,7 +65,7 @@
 				accent="var(--verdict-mixed)"
 			/>
 			<StatBlock
-				value={data.totals.taggers.toLocaleString()}
+				value={formatCount(data.totals.taggers)}
 				label="distinct taggers"
 				accent="var(--verdict-human)"
 			/>
@@ -133,7 +134,14 @@
 									<td class="r mono dim">{i + 4}</td>
 									<td><a href="/u/{row.handle}" class="handle">@{row.handle}</a></td>
 									<td class="r mono">{row.checks}</td>
-									<td class="split-col"><VerdictSplitBar ai={row.ai} mix={row.mix} human={row.human} /></td>
+									<td class="split-col">
+										<VerdictSplitBar
+											ai={row.ai}
+											mix={row.mix}
+											human={row.human}
+											label="{row.ai} AI / {row.mix} mixed / {row.human} human"
+										/>
+									</td>
 									<td class="r mono score">{formatScore(row.score)}</td>
 									<td class="r mono dim small">{timeAgo(row.lastAt)}</td>
 								</tr>
@@ -212,6 +220,8 @@
 	/* hero */
 	.hero {
 		padding: 4.5rem 2rem 3rem;
+		/* The hero owns this hairline — the ticker below is conditional. */
+		border-bottom: 1px solid var(--line);
 		position: relative;
 		overflow: hidden;
 	}
@@ -382,7 +392,8 @@
 		grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
 		gap: 3rem;
 	}
-	.section-title {
+	/* Below-the-fold titles only — the boardhead h2 stays at the global margin: 0. */
+	.twocol .section-title {
 		margin-bottom: 1rem;
 	}
 	.fresh {

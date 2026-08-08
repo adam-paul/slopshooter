@@ -43,6 +43,11 @@ export function pctAi(ai: number, checks: number): number {
 	return checks > 0 ? Math.round((100 * ai) / checks) : 0;
 }
 
+/** Stat counts use fixed en-US grouping per the design ("9,214") — never the visitor locale. */
+export function formatCount(n: number): string {
+	return n.toLocaleString('en-US');
+}
+
 export function historyUrl(uuid: string): string {
 	return `https://www.pangram.com/history/${uuid}`;
 }
