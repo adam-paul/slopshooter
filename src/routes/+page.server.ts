@@ -1,5 +1,5 @@
 import { sql } from 'drizzle-orm';
-import { hitRatePct } from '$lib/format';
+import { scoreOf } from '$lib/format';
 import { getDb } from '$lib/server/db';
 import type { PageServerLoad } from './$types';
 
@@ -12,7 +12,7 @@ interface LeaderboardCounts {
 	lastAt: number;
 }
 
-export type LeaderboardRow = LeaderboardCounts & { hitRate: number };
+export type LeaderboardRow = LeaderboardCounts & { score: number };
 
 export interface RecentRow {
 	verdictTweetId: string;
@@ -24,9 +24,13 @@ export interface RecentRow {
 }
 
 const MIN_CHECKS = 5;
+const WEEK_SECONDS = 7 * 86400;
 
-export const load: PageServerLoad = async ({ platform }) => {
+export const load: PageServerLoad = async ({ platform, url }) => {
 	const db = getDb(platform);
+
+	const range = url.searchParams.get('range') === 'week' ? 'week' : 'all-time';
+	const cutoff = range === 'week' ? Math.floor(Date.now() / 1000) - WEEK_SECONDS : 0;
 
 	// Three independent reads — overlap them instead of serializing TTFB.
 	const [leaderboardCounts, recent, totalsRows] = await Promise.all([
@@ -39,10 +43,10 @@ export const load: PageServerLoad = async ({ platform }) => {
 				SUM(verdict = 'human') AS human,
 				MAX(verdict_at)     AS lastAt
 			FROM verdicts
-			WHERE tagger_handle IS NOT NULL
+			WHERE tagger_handle IS NOT NULL AND verdict_at >= ${cutoff}
 			GROUP BY lower(tagger_handle)
 			HAVING COUNT(*) >= ${MIN_CHECKS}
-			ORDER BY (1.0 * SUM(verdict = 'ai')) / COUNT(*) DESC, checks DESC
+			ORDER BY (SUM(verdict = 'ai') + 0.5 * SUM(verdict = 'mix')) / (1.0 * COUNT(*)) DESC, checks DESC
 			LIMIT 100
 		`),
 		db.all<RecentRow>(sql`
@@ -66,17 +70,18 @@ export const load: PageServerLoad = async ({ platform }) => {
 		`)
 	]);
 
-	// hitRatePct is the one owner of the metric's definition — SQL returns raw
-	// counts and only uses the raw ratio for ordering.
+	// scoreOf is the one owner of the metric (AI=1, Mixed=1/2, Human=0) — SQL
+	// mirrors it only for ORDER BY.
 	const leaderboard: LeaderboardRow[] = leaderboardCounts.map((r) => ({
 		...r,
-		hitRate: hitRatePct(r.ai, r.checks)
+		score: scoreOf(r.ai, r.mix, r.checks)
 	}));
 
 	return {
 		leaderboard,
 		recent,
 		totals: totalsRows[0] ?? { checks: 0, ai: 0, taggers: 0 },
-		minChecks: MIN_CHECKS
+		minChecks: MIN_CHECKS,
+		range
 	};
 };

@@ -1,90 +1,134 @@
 <script lang="ts">
+	import StatBlock from '$lib/StatBlock.svelte';
 	import VerdictBadge from '$lib/VerdictBadge.svelte';
-	import { historyUrl, hitRatePct, profileUrl, timeAgo, tweetUrl } from '$lib/format';
+	import VerdictSplitBar from '$lib/VerdictSplitBar.svelte';
+	import { formatScore, historyUrl, profileUrl, scoreOf, timeAgo, tweetUrl } from '$lib/format';
 	import type { PageData } from './$types';
 
 	let { data }: { data: PageData } = $props();
 
 	const total = $derived(data.totalChecks);
-	const hitRate = $derived(hitRatePct(data.counts.ai, total));
+	const score = $derived(scoreOf(data.counts.ai, data.counts.mix, total));
 </script>
 
 <svelte:head>
 	<title>@{data.handle} — Slopshooter</title>
 </svelte:head>
 
-<nav class="crumb"><a href="/">← leaderboard</a></nav>
+<section class="profile">
+	<div class="container">
+		<nav class="crumb mono"><a href="/">← leaderboard</a></nav>
 
-<h1>
-	<a href={profileUrl(data.handle)} rel="noopener">@{data.handle}</a>
-</h1>
+		<div class="head">
+			<h1><a href={profileUrl(data.handle)} rel="noopener">@{data.handle}</a></h1>
+			<span class="bigscore mono">{formatScore(score)}</span>
+		</div>
 
-<section class="stats">
-	<div class="stat"><span class="num">{total}</span><span class="lbl">checks</span></div>
-	<div class="stat">
-		<span class="num v-ai">{data.counts.ai}</span><span class="lbl">AI</span>
+		<div class="statrow">
+			<StatBlock value={String(total)} label="checks" accent="var(--line)" />
+			<StatBlock value={String(data.counts.ai)} label="AI" accent="var(--verdict-ai)" />
+			<StatBlock value={String(data.counts.mix)} label="mixed" accent="var(--verdict-mixed)" />
+			<StatBlock value={String(data.counts.human)} label="human" accent="var(--verdict-human)" />
+		</div>
+
+		<div class="split">
+			<VerdictSplitBar ai={data.counts.ai} mix={data.counts.mix} human={data.counts.human} />
+		</div>
+
+		{#if total > data.verdicts.length}
+			<p class="feednote mono dim">showing the latest {data.verdicts.length} of {total} checks</p>
+		{/if}
+
+		<ul class="fresh">
+			{#each data.verdicts as v (v.verdictTweetId)}
+				<li>
+					<VerdictBadge verdict={v.verdict} />
+					<span>
+						{#if v.checkedAuthorHandle}
+							checked <a href={profileUrl(v.checkedAuthorHandle)} rel="noopener">@{v.checkedAuthorHandle}</a>
+						{:else}
+							checked a post
+						{/if}
+						{#if v.shortTextDisclaimer}
+							<span class="flag mono" title="Pangram flagged this text as short — verdict may be less reliable">short-text</span>
+						{/if}
+						<span class="meta mono dim">
+							{timeAgo(v.verdictAt)} · <a href={tweetUrl(v.verdictTweetId)} rel="noopener">tweet</a>
+							{#if v.historyUuid}
+								· <a href={historyUrl(v.historyUuid)} rel="noopener">report</a>
+							{/if}
+						</span>
+					</span>
+				</li>
+			{/each}
+		</ul>
 	</div>
-	<div class="stat">
-		<span class="num v-mix">{data.counts.mix}</span><span class="lbl">mixed</span>
-	</div>
-	<div class="stat">
-		<span class="num v-human">{data.counts.human}</span><span class="lbl">human</span>
-	</div>
-	<div class="stat"><span class="num">{hitRate}%</span><span class="lbl">hit rate</span></div>
 </section>
 
-{#if total > data.verdicts.length}
-	<p class="dim feednote">Showing the latest {data.verdicts.length} of {total} checks.</p>
-{/if}
-
-<ul class="feed">
-	{#each data.verdicts as v (v.verdictTweetId)}
-		<li>
-			<VerdictBadge verdict={v.verdict} />
-			{#if v.checkedAuthorHandle}
-				checked <a href={profileUrl(v.checkedAuthorHandle)} rel="noopener">@{v.checkedAuthorHandle}</a>
-			{:else}
-				checked a post
-			{/if}
-			{#if v.shortTextDisclaimer}
-				<span class="flag" title="Pangram flagged this text as short — verdict may be less reliable">short-text</span>
-			{/if}
-			<span class="dim">· {timeAgo(v.verdictAt)}</span>
-			<span class="links">
-				<a href={tweetUrl(v.verdictTweetId)} rel="noopener">tweet</a>
-				{#if v.historyUuid}
-					· <a href={historyUrl(v.historyUuid)} rel="noopener">report</a>
-				{/if}
-			</span>
-		</li>
-	{/each}
-</ul>
-
 <style>
-	.crumb {
-		margin: 1rem 0;
-		font-size: 0.85rem;
+	.profile {
+		padding: 2rem 2rem 3.5rem;
 	}
-	.feednote {
-		font-size: 0.8rem;
-		margin: 0 0 0.5rem;
+	.crumb {
+		margin: 0 0 2rem;
+		font-size: 0.78rem;
+	}
+	.head {
+		display: flex;
+		align-items: baseline;
+		justify-content: space-between;
+		gap: 1rem;
+		flex-wrap: wrap;
+		margin-bottom: 1.75rem;
 	}
 	h1 {
-		font-size: 1.4rem;
-		margin: 0.5rem 0 1rem;
+		font-size: 1.6rem;
+		font-weight: 700;
+		margin: 0;
 	}
 	h1 a {
-		color: var(--fg);
+		color: var(--fg-1);
 	}
-	.stats {
-		margin: 0 0 1.5rem;
-		--stats-gap: 1.5rem;
-		--stat-size: 1.5rem;
+	.bigscore {
+		font-size: 2.4rem;
+		font-weight: 600;
+		font-variant-numeric: tabular-nums;
+		color: var(--verdict-ai);
+	}
+	.statrow {
+		display: flex;
+		gap: 3rem;
+		flex-wrap: wrap;
+		margin-bottom: 1.5rem;
+	}
+	.split {
+		max-width: 28rem;
+		margin-bottom: 2rem;
+	}
+	.feednote {
+		font-size: 0.7rem;
+		margin: 0 0 0.75rem;
+	}
+	.fresh {
+		list-style: none;
+		padding: 0;
+		margin: 0;
+		display: grid;
+		gap: 0.55rem;
+		font-size: 0.9rem;
+	}
+	.fresh li {
+		display: flex;
+		gap: 0.7rem;
+		align-items: baseline;
+	}
+	.meta {
+		font-size: 0.75rem;
 	}
 	.flag {
-		font-size: 0.7rem;
-		color: var(--mix);
-		border: 1px dashed var(--mix);
+		font-size: 0.68rem;
+		color: var(--verdict-mixed);
+		border: 1px dashed var(--verdict-mixed);
 		border-radius: 3px;
 		padding: 0 0.3rem;
 	}

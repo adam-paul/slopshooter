@@ -1,0 +1,31 @@
+<!-- @dsCard group="Components" viewport="700x400" name="Core components" subtitle="Badges, bars, stats, table, podium, controls" -->
+<!doctype html>
+<meta charset="utf-8">
+<link rel="stylesheet" href="../../styles.css">
+<script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+<script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+<script src="../../_ds_bundle.js"></script>
+<div id="root" style="padding:16px"></div>
+<script type="text/babel">
+const NS = window.Slopshooter_0f9ed2;
+const { VerdictBadge, VerdictSplitBar, StatBlock, RangeToggle, SearchInput, PodiumCard, LeaderboardTable, Ticker, CrosshairMark } = NS;
+ReactDOM.createRoot(document.getElementById("root")).render(
+  <div style={{ display: "grid", gap: 14 }}>
+    <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
+      <CrosshairMark />
+      <VerdictBadge verdict="ai" /><VerdictBadge verdict="mixed" /><VerdictBadge verdict="human" />
+      <RangeToggle value="all-time" />
+      <SearchInput />
+    </div>
+    <div style={{ display: "flex", gap: 24 }}>
+      <StatBlock value="9,214" label="checks tracked" />
+      <StatBlock value="62%" label="came back AI" accent="var(--verdict-mixed)" />
+      <div style={{ flex: 1, alignSelf: "center" }}><VerdictSplitBar ai={57} mixed={12} human={9} /></div>
+    </div>
+    <PodiumCard rank={1} handle="slophunter42" score=".97" checks={60} ai={57} mixed={2} human={1} lastAt="2h ago" />
+    <LeaderboardTable rows={[{ rank: 4, handle: "botspotter", checks: 45, ai: 31, mixed: 8, human: 6, score: ".78", lastAt: "1d ago" }, { rank: 5, handle: "em_dash_police", checks: 203, ai: 132, mixed: 31, human: 40, score: ".73", lastAt: "3h ago" }]} />
+    <Ticker items={[{ verdict: "ai", tagger: "slophunter42", target: "engagement_guru", ago: "12m ago" }, { verdict: "human", tagger: "vibesonly", target: "novelist_jane", ago: "26m ago" }, { verdict: "mixed", tagger: "checkedm8", target: "thoughtlord", ago: "1h ago" }]} />
+  </div>
+);
+</script>

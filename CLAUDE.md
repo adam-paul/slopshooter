@@ -16,6 +16,14 @@ the HTTP API — it never imports SvelteKit or the Workers binding.
 - `bun run db:generate` — regen migrations after editing `src/lib/server/db/schema.ts`
 - `bun run poll -- --dry-run` — fetch + parse without writing
 
+## Design
+
+The canonical design system lives in the claude.ai/design project "Slopshooter"
+(design-system type); `design/` is its pulled snapshot, synced via the DesignSync tool —
+never hand-edit `design/` expecting it to flow upstream. The scoring rule (AI = 1,
+Mixed = ½, Human = 0, averaged; `scoreOf`/`formatScore` in `src/lib/format.ts`) and the
+no-emoji / tricolor / Archivo+Plex-Mono rules come from `design/readme.md`.
+
 ## Commit convention
 
 No Co-Authored-By trailers or assistant attribution in commit messages — this repo is

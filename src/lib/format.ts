@@ -28,9 +28,19 @@ export function verdictMeta(verdict: string): { label: string; className: string
 	};
 }
 
-/** The site's one hit-rate definition: % of checks Pangram called fully AI, 1 decimal. */
-export function hitRatePct(ai: number, checks: number): number {
-	return checks > 0 ? Math.round((1000 * ai) / checks) / 10 : 0;
+/** The site's one scoring definition: AI = 1, Mixed = ½, Human = 0, averaged 0–1. */
+export function scoreOf(ai: number, mix: number, checks: number): number {
+	return checks > 0 ? (ai + 0.5 * mix) / checks : 0;
+}
+
+/** Design rule: scores drop the leading zero — ".97", "1.00". */
+export function formatScore(score: number): string {
+	return score.toFixed(2).replace(/^0\./, '.');
+}
+
+/** % of checks that came back fully AI — used for site-wide stats, not tagger scores. */
+export function pctAi(ai: number, checks: number): number {
+	return checks > 0 ? Math.round((100 * ai) / checks) : 0;
 }
 
 export function historyUrl(uuid: string): string {

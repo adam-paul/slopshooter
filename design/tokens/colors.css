@@ -1,0 +1,16 @@
+:root {
+  /* ground */
+  --bg-0: #0e1116;      /* page background */
+  --bg-1: #0a0d12;      /* recessed panels: ticker, podium cards */
+  --bg-hover: #12161d;  /* row hover */
+  --line: #21262d;      /* hairline borders everywhere */
+  /* ink */
+  --fg-1: #e6e8eb;      /* primary text */
+  --fg-muted: #8b949e;  /* secondary text, labels, numbers */
+  /* verdict tricolor — the brand */
+  --verdict-ai: #f85149;
+  --verdict-mixed: #d29922;
+  --verdict-human: #3fb950;
+  /* links */
+  --accent-link: #58a6ff;
+}
