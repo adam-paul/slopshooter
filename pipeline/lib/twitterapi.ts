@@ -38,7 +38,7 @@ export class TwitterApiClient {
 			includeReplies: 'true',
 			...(cursor ? { cursor } : {})
 		});
-		const raw: any[] = payload?.tweets ?? payload?.data?.tweets ?? [];
+		const raw: any[] = payload?.tweets ?? [];
 		const hasNext = payload?.has_next_page ?? payload?.hasNextPage ?? false;
 		const next = payload?.next_cursor ?? payload?.nextCursor ?? null;
 		return { tweets: raw.map(normalizeTweet), nextCursor: hasNext && next ? String(next) : null };
@@ -67,12 +67,17 @@ function str(v: unknown): string | null {
 export function normalizeTweet(t: any): NormalizedTweet {
 	const author = t.author ?? t.user ?? {};
 	const quoted = t.quoted_tweet ?? t.quotedTweet ?? null;
+	// Prefer string-typed id fields: a legacy payload's numeric `id` has already
+	// lost precision beyond 2^53 by the time JSON.parse hands it to us.
+	const id = str(t.id_str ?? t.tweet_id ?? t.id) ?? '';
+	const parsedDate = parseTweetDate(t.createdAt ?? t.created_at);
 	return {
-		// Prefer string-typed id fields: a legacy payload's numeric `id` has already
-		// lost precision beyond 2^53 by the time JSON.parse hands it to us.
-		id: str(t.id_str ?? t.tweet_id ?? t.id) ?? '',
+		id,
 		text: t.text ?? t.full_text ?? '',
-		createdAt: parseTweetDate(t.createdAt ?? t.created_at),
+		// Snowflake ids encode their creation time — the normalization layer owns
+		// this fallback so no consumer ever sees a 0 sentinel it must repair.
+		createdAt: parsedDate || snowflakeToUnixSeconds(id),
+		createdAtDerived: parsedDate === 0,
 		authorId: str(author.id_str ?? t.author_id ?? author.id),
 		authorHandle: author.userName ?? author.username ?? author.screen_name ?? null,
 		inReplyToTweetId: str(t.in_reply_to_status_id_str ?? t.inReplyToId ?? t.in_reply_to_status_id),
@@ -84,6 +89,17 @@ export function normalizeTweet(t: any): NormalizedTweet {
 			.map((u: any) => u.expanded_url ?? u.expandedUrl ?? u.url)
 			.filter(Boolean)
 	};
+}
+
+const TWITTER_EPOCH_MS = 1288834974657;
+
+/** Snowflake ids encode their creation time. Returns unix seconds, 0 on failure. */
+export function snowflakeToUnixSeconds(id: string): number {
+	try {
+		return Math.floor((Number(BigInt(id) >> 22n) + TWITTER_EPOCH_MS) / 1000);
+	} catch {
+		return 0;
+	}
 }
 
 /** Handles ISO 8601 and legacy "Wed Oct 10 20:19:24 +0000 2018". Returns unix seconds, 0 on failure. */

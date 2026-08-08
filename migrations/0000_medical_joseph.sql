@@ -29,6 +29,6 @@ CREATE TABLE `verdicts` (
 	`ingested_at` integer NOT NULL
 );
 --> statement-breakpoint
-CREATE INDEX `idx_verdicts_tagger` ON `verdicts` (`tagger_handle`);--> statement-breakpoint
+CREATE INDEX `idx_verdicts_tagger_lower` ON `verdicts` (lower("tagger_handle"));--> statement-breakpoint
 CREATE INDEX `idx_verdicts_verdict_at` ON `verdicts` (`verdict_at`);--> statement-breakpoint
 CREATE INDEX `idx_verdicts_checked_author` ON `verdicts` (`checked_author_handle`);

@@ -1,5 +1,6 @@
 <script lang="ts">
-	import { historyUrl, timeAgo, tweetUrl, VERDICT_META } from '$lib/format';
+	import VerdictBadge from '$lib/VerdictBadge.svelte';
+	import { historyUrl, hitRatePct, profileUrl, timeAgo, tweetUrl } from '$lib/format';
 	import type { PageData } from './$types';
 
 	let { data }: { data: PageData } = $props();
@@ -19,9 +20,7 @@
 		<span class="lbl">checks tracked</span>
 	</div>
 	<div class="stat">
-		<span class="num">
-			{data.totals.checks > 0 ? Math.round((100 * data.totals.ai) / data.totals.checks) : 0}%
-		</span>
+		<span class="num">{hitRatePct(data.totals.ai, data.totals.checks)}%</span>
 		<span class="lbl">came back AI</span>
 	</div>
 	<div class="stat">
@@ -81,9 +80,8 @@
 	{:else}
 		<ul class="feed">
 			{#each data.recent as v (v.verdictTweetId)}
-				{@const meta = VERDICT_META[v.verdict] ?? { label: v.verdict, className: '' }}
 				<li>
-					<span class="badge {meta.className}">{meta.label}</span>
+					<VerdictBadge verdict={v.verdict} />
 					{#if v.taggerHandle}
 						<a href="/u/{v.taggerHandle}">@{v.taggerHandle}</a>
 					{:else}
@@ -91,14 +89,14 @@
 					{/if}
 					tagged
 					{#if v.checkedAuthorHandle}
-						<a href="https://x.com/{v.checkedAuthorHandle}" rel="noopener">@{v.checkedAuthorHandle}</a>
+						<a href={profileUrl(v.checkedAuthorHandle)} rel="noopener">@{v.checkedAuthorHandle}</a>
 					{:else}
 						<span class="dim">a post</span>
 					{/if}
 					<span class="dim">· {timeAgo(v.verdictAt)}</span>
 					<span class="links">
 						<a href={tweetUrl(v.verdictTweetId)} rel="noopener">tweet</a>
-						{#if historyUrl(v.historyUuid)}
+						{#if v.historyUuid}
 							· <a href={historyUrl(v.historyUuid)} rel="noopener">report</a>
 						{/if}
 					</span>
@@ -110,20 +108,7 @@
 
 <style>
 	.stats {
-		display: flex;
-		gap: 2rem;
-		flex-wrap: wrap;
 		margin: 1.5rem 0 2.5rem;
-	}
-	.stat .num {
-		display: block;
-		font-size: 2rem;
-		font-weight: 700;
-		font-variant-numeric: tabular-nums;
-	}
-	.stat .lbl {
-		color: var(--dim);
-		font-size: 0.85rem;
 	}
 	h2 {
 		margin: 2rem 0 0.25rem;
@@ -170,47 +155,5 @@
 		background: linear-gradient(to right, var(--accent-dim) var(--pct), transparent var(--pct));
 		padding: 0.1rem 0.4rem;
 		border-radius: 3px;
-	}
-	.feed {
-		list-style: none;
-		padding: 0;
-		margin: 0.75rem 0;
-		display: grid;
-		gap: 0.4rem;
-		font-size: 0.9rem;
-	}
-	.badge {
-		display: inline-block;
-		min-width: 3.5rem;
-		text-align: center;
-		padding: 0.05rem 0.45rem;
-		border-radius: 999px;
-		font-size: 0.72rem;
-		font-weight: 600;
-		border: 1px solid var(--line);
-	}
-	.links {
-		font-size: 0.8rem;
-	}
-	.dim {
-		color: var(--dim);
-	}
-	.v-ai {
-		color: var(--ai);
-	}
-	.v-mix {
-		color: var(--mix);
-	}
-	.v-human {
-		color: var(--human);
-	}
-	.badge.v-ai {
-		border-color: var(--ai);
-	}
-	.badge.v-mix {
-		border-color: var(--mix);
-	}
-	.badge.v-human {
-		border-color: var(--human);
 	}
 </style>

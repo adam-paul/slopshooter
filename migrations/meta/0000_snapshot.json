@@ -1,7 +1,7 @@
 {
   "version": "6",
   "dialect": "sqlite",
-  "id": "5e5580f5-8702-46c0-b3ed-3da2b5363701",
+  "id": "4edf1ec3-2e0d-4c11-86be-17010e379f9a",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "tables": {
     "ingest_state": {
@@ -186,10 +186,10 @@
         }
       },
       "indexes": {
-        "idx_verdicts_tagger": {
-          "name": "idx_verdicts_tagger",
+        "idx_verdicts_tagger_lower": {
+          "name": "idx_verdicts_tagger_lower",
           "columns": [
-            "tagger_handle"
+            "lower(\"tagger_handle\")"
           ],
           "isUnique": false
         },
@@ -222,6 +222,14 @@
     "columns": {}
   },
   "internal": {
-    "indexes": {}
+    "indexes": {
+      "idx_verdicts_tagger_lower": {
+        "columns": {
+          "lower(\"tagger_handle\")": {
+            "isExpression": true
+          }
+        }
+      }
+    }
   }
 }

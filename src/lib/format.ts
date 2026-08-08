@@ -1,3 +1,5 @@
+import type { VerdictLabel } from '../../shared/verdicts';
+
 export function timeAgo(unixSeconds: number): string {
 	const s = Math.max(0, Math.floor(Date.now() / 1000) - unixSeconds);
 	if (s < 60) return 'just now';
@@ -12,16 +14,33 @@ export function timeAgo(unixSeconds: number): string {
 	return `${Math.floor(mo / 12)}y ago`;
 }
 
-export const VERDICT_META: Record<string, { label: string; className: string }> = {
+const VERDICT_META: Record<VerdictLabel, { label: string; className: string }> = {
 	ai: { label: 'AI', className: 'v-ai' },
 	mix: { label: 'Mixed', className: 'v-mix' },
 	human: { label: 'Human', className: 'v-human' }
 };
 
-export function historyUrl(uuid: string | null): string | null {
-	return uuid ? `https://www.pangram.com/history/${uuid}` : null;
+/** Owns the unknown-verdict fallback so templates never re-implement it. */
+export function verdictMeta(verdict: string): { label: string; className: string } {
+	return (VERDICT_META as Record<string, { label: string; className: string }>)[verdict] ?? {
+		label: verdict,
+		className: ''
+	};
+}
+
+/** The site's one hit-rate definition: % of checks Pangram called fully AI, 1 decimal. */
+export function hitRatePct(ai: number, checks: number): number {
+	return checks > 0 ? Math.round((1000 * ai) / checks) / 10 : 0;
+}
+
+export function historyUrl(uuid: string): string {
+	return `https://www.pangram.com/history/${uuid}`;
 }
 
 export function tweetUrl(id: string): string {
 	return `https://x.com/i/status/${id}`;
+}
+
+export function profileUrl(handle: string): string {
+	return `https://x.com/${handle}`;
 }

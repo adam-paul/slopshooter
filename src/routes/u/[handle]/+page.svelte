@@ -1,11 +1,12 @@
 <script lang="ts">
-	import { historyUrl, timeAgo, tweetUrl, VERDICT_META } from '$lib/format';
+	import VerdictBadge from '$lib/VerdictBadge.svelte';
+	import { historyUrl, hitRatePct, profileUrl, timeAgo, tweetUrl } from '$lib/format';
 	import type { PageData } from './$types';
 
 	let { data }: { data: PageData } = $props();
 
 	const total = $derived(data.totalChecks);
-	const hitRate = $derived(total > 0 ? Math.round((100 * data.counts.ai) / total) : 0);
+	const hitRate = $derived(hitRatePct(data.counts.ai, total));
 </script>
 
 <svelte:head>
@@ -15,7 +16,7 @@
 <nav class="crumb"><a href="/">← leaderboard</a></nav>
 
 <h1>
-	<a href="https://x.com/{data.handle}" rel="noopener">@{data.handle}</a>
+	<a href={profileUrl(data.handle)} rel="noopener">@{data.handle}</a>
 </h1>
 
 <section class="stats">
@@ -38,11 +39,10 @@
 
 <ul class="feed">
 	{#each data.verdicts as v (v.verdictTweetId)}
-		{@const meta = VERDICT_META[v.verdict] ?? { label: v.verdict, className: '' }}
 		<li>
-			<span class="badge {meta.className}">{meta.label}</span>
+			<VerdictBadge verdict={v.verdict} />
 			{#if v.checkedAuthorHandle}
-				checked <a href="https://x.com/{v.checkedAuthorHandle}" rel="noopener">@{v.checkedAuthorHandle}</a>
+				checked <a href={profileUrl(v.checkedAuthorHandle)} rel="noopener">@{v.checkedAuthorHandle}</a>
 			{:else}
 				checked a post
 			{/if}
@@ -52,7 +52,7 @@
 			<span class="dim">· {timeAgo(v.verdictAt)}</span>
 			<span class="links">
 				<a href={tweetUrl(v.verdictTweetId)} rel="noopener">tweet</a>
-				{#if historyUrl(v.historyUuid)}
+				{#if v.historyUuid}
 					· <a href={historyUrl(v.historyUuid)} rel="noopener">report</a>
 				{/if}
 			</span>
@@ -77,38 +77,9 @@
 		color: var(--fg);
 	}
 	.stats {
-		display: flex;
-		gap: 1.5rem;
-		flex-wrap: wrap;
 		margin: 0 0 1.5rem;
-	}
-	.stat .num {
-		display: block;
-		font-size: 1.5rem;
-		font-weight: 700;
-		font-variant-numeric: tabular-nums;
-	}
-	.stat .lbl {
-		color: var(--dim);
-		font-size: 0.8rem;
-	}
-	.feed {
-		list-style: none;
-		padding: 0;
-		margin: 0;
-		display: grid;
-		gap: 0.4rem;
-		font-size: 0.9rem;
-	}
-	.badge {
-		display: inline-block;
-		min-width: 3.5rem;
-		text-align: center;
-		padding: 0.05rem 0.45rem;
-		border-radius: 999px;
-		font-size: 0.72rem;
-		font-weight: 600;
-		border: 1px solid var(--line);
+		--stats-gap: 1.5rem;
+		--stat-size: 1.5rem;
 	}
 	.flag {
 		font-size: 0.7rem;
@@ -116,29 +87,5 @@
 		border: 1px dashed var(--mix);
 		border-radius: 3px;
 		padding: 0 0.3rem;
-	}
-	.links {
-		font-size: 0.8rem;
-	}
-	.dim {
-		color: var(--dim);
-	}
-	.v-ai {
-		color: var(--ai);
-	}
-	.v-mix {
-		color: var(--mix);
-	}
-	.v-human {
-		color: var(--human);
-	}
-	.badge.v-ai {
-		border-color: var(--ai);
-	}
-	.badge.v-mix {
-		border-color: var(--mix);
-	}
-	.badge.v-human {
-		border-color: var(--human);
 	}
 </style>

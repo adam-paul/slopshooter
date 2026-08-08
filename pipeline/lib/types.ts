@@ -1,4 +1,4 @@
-export type VerdictLabel = 'ai' | 'human' | 'mix';
+export type { VerdictLabel } from '../../shared/verdicts';
 
 /**
  * Provider-agnostic tweet shape. All provider-specific field names are handled
@@ -8,8 +8,10 @@ export type VerdictLabel = 'ai' | 'human' | 'mix';
 export interface NormalizedTweet {
 	id: string;
 	text: string;
-	/** Unix seconds; 0 if the source date failed to parse (logged by caller). */
+	/** Unix seconds. Derived from the snowflake id when the source date failed to parse. */
 	createdAt: number;
+	/** True when createdAt came from the snowflake fallback, not the payload. */
+	createdAtDerived: boolean;
 	authorId: string | null;
 	authorHandle: string | null;
 	inReplyToTweetId: string | null;

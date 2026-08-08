@@ -61,6 +61,46 @@
 	:global(a:hover) {
 		text-decoration: underline;
 	}
+	/* Shared vocabulary classes — verdict colors and the feed/stat primitives
+	   both route pages compose. Sizes are tunable per page via custom props. */
+	:global(.v-ai) {
+		color: var(--ai);
+	}
+	:global(.v-mix) {
+		color: var(--mix);
+	}
+	:global(.v-human) {
+		color: var(--human);
+	}
+	:global(.dim) {
+		color: var(--dim);
+	}
+	:global(.links) {
+		font-size: 0.8rem;
+	}
+	:global(.feed) {
+		list-style: none;
+		padding: 0;
+		margin: 0.75rem 0;
+		display: grid;
+		gap: 0.4rem;
+		font-size: 0.9rem;
+	}
+	:global(.stats) {
+		display: flex;
+		gap: var(--stats-gap, 2rem);
+		flex-wrap: wrap;
+	}
+	:global(.stat .num) {
+		display: block;
+		font-size: var(--stat-size, 2rem);
+		font-weight: 700;
+		font-variant-numeric: tabular-nums;
+	}
+	:global(.stat .lbl) {
+		color: var(--dim);
+		font-size: 0.85rem;
+	}
 	.shell {
 		max-width: 60rem;
 		margin: 0 auto;

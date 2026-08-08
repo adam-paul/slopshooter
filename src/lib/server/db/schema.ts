@@ -1,4 +1,6 @@
+import { sql } from 'drizzle-orm';
 import { index, integer, real, sqliteTable, text } from 'drizzle-orm/sqlite-core';
+import { VERDICT_LABELS } from '../../../../shared/verdicts';
 
 /**
  * One row per verdict reply posted by @pangram.
@@ -13,7 +15,7 @@ export const verdicts = sqliteTable(
 		verdictTweetId: text('verdict_tweet_id').primaryKey(),
 		/** UUID from the pangram.com/history/{uuid} link — the stable per-check key. */
 		historyUuid: text('history_uuid'),
-		verdict: text('verdict', { enum: ['ai', 'human', 'mix'] }).notNull(),
+		verdict: text('verdict', { enum: VERDICT_LABELS }).notNull(),
 		/** 0–100, OCR'd from the history page's OG image. Null until the v2 enricher runs. */
 		pctAi: real('pct_ai'),
 		taggerId: text('tagger_id'),
@@ -36,7 +38,9 @@ export const verdicts = sqliteTable(
 		ingestedAt: integer('ingested_at').notNull()
 	},
 	(t) => [
-		index('idx_verdicts_tagger').on(t.taggerHandle),
+		// Expression index matching how every query compares handles (lower()).
+		// A raw-column index could never serve those reads.
+		index('idx_verdicts_tagger_lower').on(sql`lower(${t.taggerHandle})`),
 		index('idx_verdicts_verdict_at').on(t.verdictAt),
 		index('idx_verdicts_checked_author').on(t.checkedAuthorHandle)
 	]
