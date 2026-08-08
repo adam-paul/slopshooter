@@ -24,9 +24,25 @@ jobs:
     timeout-minutes: 60
     steps:
       - uses: actions/checkout@v4
+      # Skip cleanly (green) until secrets are configured, instead of failing
+      # red every 15 minutes on a fresh repo.
+      - name: Gate on secrets
+        id: gate
+        env:
+          KEY: ${{ secrets.TWITTERAPI_IO_KEY }}
+        run: |
+          if [ -z "$KEY" ]; then
+            echo "configured=false" >> "$GITHUB_OUTPUT"
+            echo "::notice title=Poll skipped::Secrets not set yet — add the four secrets from .env.example (repo Settings -> Secrets and variables -> Actions) to enable polling."
+          else
+            echo "configured=true" >> "$GITHUB_OUTPUT"
+          fi
       - uses: oven-sh/setup-bun@v2
+        if: steps.gate.outputs.configured == 'true'
       - run: bun install --frozen-lockfile
+        if: steps.gate.outputs.configured == 'true'
       - name: Poll @pangram and write verdicts to D1
+        if: steps.gate.outputs.configured == 'true'
         run: bun run pipeline/poll.ts ${{ inputs.args }}
         env:
           TWITTERAPI_IO_KEY: ${{ secrets.TWITTERAPI_IO_KEY }}
