@@ -1,0 +1,27 @@
+<!-- @dsCard group="Type" -->
+<!doctype html>
+<meta charset="utf-8" />
+<title>Slopshooter — Type</title>
+<style>
+	:root { --bg: #0e1116; --fg: #e6e8eb; --dim: #8b949e; --line: #21262d; }
+	body { margin: 0; padding: 1.5rem; background: var(--bg); color: var(--fg);
+		font-family: ui-sans-serif, system-ui, -apple-system, sans-serif; line-height: 1.5; }
+	h1 { font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--dim); margin: 0 0 1rem; }
+	.row { display: flex; align-items: baseline; gap: 1rem; border-bottom: 1px solid var(--line); padding: 0.5rem 0; }
+	.row code { color: var(--dim); font-size: 0.72rem; min-width: 16rem; font-family: ui-monospace, monospace; }
+	.stat { font-size: 2rem; font-weight: 700; font-variant-numeric: tabular-nums; }
+	.h-page { font-size: 1.4rem; font-weight: 700; }
+	.h-logo { font-size: 1.15rem; font-weight: 700; }
+	.h-section { font-size: 1.1rem; font-weight: 600; }
+	.body { font-size: 0.9rem; }
+	.meta { font-size: 0.85rem; color: var(--dim); }
+	.fine { font-size: 0.78rem; color: var(--dim); }
+</style>
+<h1>Type scale — system stack, no webfonts</h1>
+<div class="row"><code>2rem / 700 / tabular-nums</code><span class="stat">87%</span></div>
+<div class="row"><code>1.4rem / 700 — page title</code><span class="h-page">@slophunter42</span></div>
+<div class="row"><code>1.15rem / 700 — logo</code><span class="h-logo">🎯 Slopshooter</span></div>
+<div class="row"><code>1.1rem / 600 — section head</code><span class="h-section">Leaderboard</span></div>
+<div class="row"><code>0.9rem — body / table</code><span class="body">We believe that this entire text is AI.</span></div>
+<div class="row"><code>0.85rem / --dim — hints</code><span class="meta">Taggers with ≥5 checks, ranked by hit rate.</span></div>
+<div class="row"><code>0.78rem / --dim — footer</code><span class="fine">Measures agreement with Pangram, nothing more.</span></div>

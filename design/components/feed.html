@@ -1,0 +1,25 @@
+<!-- @dsCard group="Components" -->
+<!doctype html>
+<meta charset="utf-8" />
+<title>Slopshooter — Verdict feed</title>
+<style>
+	:root { --bg: #0e1116; --fg: #e6e8eb; --dim: #8b949e; --line: #21262d;
+		--accent: #58a6ff; --ai: #f85149; --mix: #d29922; --human: #3fb950; }
+	body { margin: 0; padding: 1.5rem; background: var(--bg); color: var(--fg);
+		font-family: ui-sans-serif, system-ui, -apple-system, sans-serif; }
+	a { color: var(--accent); text-decoration: none; }
+	ul { list-style: none; padding: 0; margin: 0; display: grid; gap: 0.4rem; font-size: 0.9rem; }
+	.badge { display: inline-block; min-width: 3.5rem; text-align: center; padding: 0.05rem 0.45rem;
+		border-radius: 999px; font-size: 0.72rem; font-weight: 600; border: 1px solid var(--line); }
+	.v-ai { color: var(--ai); border-color: var(--ai); }
+	.v-mix { color: var(--mix); border-color: var(--mix); }
+	.v-human { color: var(--human); border-color: var(--human); }
+	.dim { color: var(--dim); }
+	.links { font-size: 0.8rem; }
+</style>
+<ul>
+	<li><span class="badge v-ai">AI</span> <a href="#">@slophunter42</a> tagged <a href="#">@engagement_guru</a> <span class="dim">· 12m ago</span> <span class="links"><a href="#">tweet</a> · <a href="#">report</a></span></li>
+	<li><span class="badge v-human">Human</span> <a href="#">@vibesonly</a> tagged <a href="#">@novelist_jane</a> <span class="dim">· 26m ago</span> <span class="links"><a href="#">tweet</a> · <a href="#">report</a></span></li>
+	<li><span class="badge v-mix">Mixed</span> <a href="#">@checkedm8</a> tagged <a href="#">@thoughtlord</a> <span class="dim">· 1h ago</span> <span class="links"><a href="#">tweet</a> · <a href="#">report</a></span></li>
+	<li><span class="badge v-ai">AI</span> <a href="#">@aivigilante</a> tagged <span class="dim">a post</span> <span class="dim">· 2h ago</span> <span class="links"><a href="#">tweet</a></span></li>
+</ul>
