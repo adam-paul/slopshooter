@@ -32,6 +32,8 @@ export const verdicts = sqliteTable(
 		truncated: integer('truncated', { mode: 'boolean' }).notNull().default(false),
 		/** "Extracted N words from the image." prefix present. */
 		fromImage: integer('from_image', { mode: 'boolean' }).notNull().default(false),
+		/** "Extracted N words from the link." prefix present (article-URL checks). */
+		fromLink: integer('from_link', { mode: 'boolean' }).notNull().default(false),
 		rawText: text('raw_text').notNull(),
 		/** Unix seconds. Can lag the summons by hours after bot outages (backfills). */
 		verdictAt: integer('verdict_at').notNull(),

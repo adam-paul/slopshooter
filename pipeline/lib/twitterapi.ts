@@ -11,21 +11,41 @@ const BASE = 'https://api.twitterapi.io';
  * `bun run pipeline/poll.ts --dry-run` and check that ids/handles/reply fields
  * come through; adjust normalizeTweet() if the provider's schema differs.
  */
+const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
 export class TwitterApiClient {
+	/** Learned pacing: starts at 0; the first 429 teaches us the account's QPS floor. */
+	private minIntervalMs = 0;
+	private lastRequestAt = 0;
+
 	constructor(private apiKey: string) {}
 
 	private async get(path: string, params: Record<string, string>): Promise<any> {
 		const url = new URL(BASE + path);
 		for (const [k, v] of Object.entries(params)) url.searchParams.set(k, v);
-		const res = await fetch(url, { headers: { 'X-API-Key': this.apiKey } });
-		if (!res.ok) {
-			throw new Error(`twitterapi.io ${path} -> HTTP ${res.status}: ${await res.text()}`);
+
+		for (let attempt = 1; ; attempt++) {
+			const wait = this.lastRequestAt + this.minIntervalMs - Date.now();
+			if (wait > 0) await sleep(wait);
+			this.lastRequestAt = Date.now();
+
+			const res = await fetch(url, { headers: { 'X-API-Key': this.apiKey } });
+			if (res.status === 429 && attempt <= 5) {
+				// Free-tier accounts allow one request per 5s; adopt that pace for the
+				// rest of the run instead of failing. Paid tiers never hit this.
+				await res.body?.cancel();
+				this.minIntervalMs = Math.max(this.minIntervalMs, 5500);
+				continue;
+			}
+			if (!res.ok) {
+				throw new Error(`twitterapi.io ${path} -> HTTP ${res.status}: ${await res.text()}`);
+			}
+			const json: any = await res.json();
+			if (json?.status && json.status !== 'success') {
+				throw new Error(`twitterapi.io ${path} -> status=${json.status}: ${json.msg ?? json.message ?? 'unknown error'}`);
+			}
+			return json?.data ?? json;
 		}
-		const json: any = await res.json();
-		if (json?.status && json.status !== 'success') {
-			throw new Error(`twitterapi.io ${path} -> status=${json.status}: ${json.msg ?? json.message ?? 'unknown error'}`);
-		}
-		return json?.data ?? json;
 	}
 
 	/** One page of a user's timeline including replies. */

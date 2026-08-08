@@ -24,6 +24,7 @@ CREATE TABLE `verdicts` (
 	`short_text_disclaimer` integer DEFAULT false NOT NULL,
 	`truncated` integer DEFAULT false NOT NULL,
 	`from_image` integer DEFAULT false NOT NULL,
+	`from_link` integer DEFAULT false NOT NULL,
 	`raw_text` text NOT NULL,
 	`verdict_at` integer NOT NULL,
 	`ingested_at` integer NOT NULL

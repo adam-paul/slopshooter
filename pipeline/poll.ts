@@ -53,6 +53,7 @@ interface VerdictRow {
 	shortTextDisclaimer: boolean;
 	truncated: boolean;
 	fromImage: boolean;
+	fromLink: boolean;
 	rawText: string;
 	verdictAt: number;
 	/** Not a column — drives the CI warning for snowflake-derived timestamps. */
@@ -78,6 +79,7 @@ const VERDICT_COLUMNS: Array<[string, (r: VerdictRow, now: number) => unknown]> 
 	['short_text_disclaimer', (r) => (r.shortTextDisclaimer ? 1 : 0)],
 	['truncated', (r) => (r.truncated ? 1 : 0)],
 	['from_image', (r) => (r.fromImage ? 1 : 0)],
+	['from_link', (r) => (r.fromLink ? 1 : 0)],
 	['raw_text', (r) => r.rawText],
 	['verdict_at', (r) => r.verdictAt],
 	['ingested_at', (_r, now) => now]
@@ -167,6 +169,7 @@ function resolveRow(
 		shortTextDisclaimer: parsed.shortTextDisclaimer,
 		truncated: parsed.truncated,
 		fromImage: parsed.fromImage,
+		fromLink: parsed.fromLink,
 		rawText: tweet.text,
 		verdictAt: tweet.createdAt,
 		dateDerived: tweet.createdAtDerived

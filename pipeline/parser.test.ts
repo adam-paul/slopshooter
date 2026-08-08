@@ -19,6 +19,7 @@ describe('current template (Aug 2026)', () => {
 			historyUuid: UUID,
 			truncated: false,
 			fromImage: false,
+			fromLink: false,
 			shortTextDisclaimer: true
 		});
 	});
@@ -106,6 +107,29 @@ describe('legacy templates (Feb–Jul 2026)', () => {
 			expect(r.label).toBe('human');
 			expect(r.truncated).toBe(true);
 		}
+	});
+
+	test('link-extraction + truncation + graded-mix template (verbatim, tweet 2086150647448031518)', () => {
+		const r = parseVerdictReply(
+			'@lovnexora @arlanr Extracted 5296 words from the link.\n\nTruncated to 2500 words.\n\nWe believe this text is mainly AI, with some human-written content.\n\nhttps://t.co/PfRa2SifNu https://t.co/UFpl8ep2IW',
+			[HISTORY_URL]
+		);
+		expect(r.kind).toBe('verdict');
+		if (r.kind === 'verdict') {
+			expect(r.label).toBe('mix');
+			expect(r.fromLink).toBe(true);
+			expect(r.truncated).toBe(true);
+			expect(r.fromImage).toBe(false);
+		}
+	});
+
+	test('graded-mix inverse wording is also mix (defensive)', () => {
+		const r = parseVerdictReply(
+			'@a We believe this text is mainly human-written, with some AI content. https://t.co/x',
+			[HISTORY_URL]
+		);
+		expect(r.kind).toBe('verdict');
+		if (r.kind === 'verdict') expect(r.label).toBe('mix');
 	});
 
 	test('image-OCR prefix ("Extracted 98 words from the image.")', () => {

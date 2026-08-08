@@ -1,7 +1,7 @@
 {
   "version": "6",
   "dialect": "sqlite",
-  "id": "4edf1ec3-2e0d-4c11-86be-17010e379f9a",
+  "id": "4d9dff6e-5df7-4dc3-9187-437abbefa755",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "tables": {
     "ingest_state": {
@@ -157,6 +157,14 @@
         },
         "from_image": {
           "name": "from_image",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": false
+        },
+        "from_link": {
+          "name": "from_link",
           "type": "integer",
           "primaryKey": false,
           "notNull": true,

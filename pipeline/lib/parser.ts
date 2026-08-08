@@ -7,6 +7,7 @@ export type ParseResult =
 			historyUuid: string | null;
 			truncated: boolean;
 			fromImage: boolean;
+			fromLink: boolean;
 			shortTextDisclaimer: boolean;
 	  }
 	| { kind: 'unrecognized'; reason: string }
@@ -26,6 +27,8 @@ const HISTORY_URL_RE = /pangram\.com\/history\/([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0
  *   Aug 2026:      "We believe that this entire text is AI."
  *                  "We believe that this entire text is human-written."
  *                  "We believe that this entire text is a mix of AI and human-written content."
+ *                  "We believe this text is mainly AI, with some human-written content."
+ *                  (note: no "that" in the graded-mix variant, observed 2026-08-08)
  *
  * ORDER MATTERS: mixed-verdict patterns must precede the plain AI pattern, or
  * "AI-assisted, but not fully AI-generated" would be misread as 'ai'.
@@ -33,6 +36,7 @@ const HISTORY_URL_RE = /pangram\.com\/history\/([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0
 const TEMPLATES: Array<{ re: RegExp; label: VerdictLabel }> = [
 	{ re: /^We believe that this (?:document|entire text|text) is AI-assisted, but not fully AI-generated\b/, label: 'mix' },
 	{ re: /^We believe that this (?:entire )?text is a mix of AI and human-written content\b/, label: 'mix' },
+	{ re: /^We believe (?:that )?this (?:entire )?text is mainly (?:AI|human-written), with some (?:AI(?:-generated)?|human-written) content\b/, label: 'mix' },
 	{ re: /^We believe that this document is a mix of AI-generated,(?: AI-assisted,)? and human-written content\b/, label: 'mix' },
 	{ re: /^We (?:believe|are confident) that this (?:document|entire text|text) is (?:fully )?AI(?:-generated)?\.?(?:\s|$)/, label: 'ai' },
 	{ re: /^We (?:believe|are confident) that this (?:document|entire text|text) is (?:fully )?human-written\b/, label: 'human' },
@@ -42,6 +46,9 @@ const TEMPLATES: Array<{ re: RegExp; label: VerdictLabel }> = [
 
 const TRUNCATED_PREFIX_RE = /^Truncated to [\d,]+ words\.\s*/;
 const IMAGE_PREFIX_RE = /^Extracted [\d,]+ words? from the image\.\s*/;
+// Observed live 2026-08-08 (tweet 2086150647448031518): the bot also extracts
+// article text from URLs — "Extracted 5296 words from the link."
+const LINK_PREFIX_RE = /^Extracted [\d,]+ words? from the link\.\s*/;
 const DISCLAIMER_RE = /Disclaimer: For text under \d+ words/;
 
 /**
@@ -61,6 +68,7 @@ export function parseVerdictReply(text: string, expandedUrls: string[] = []): Pa
 
 	let truncated = false;
 	let fromImage = false;
+	let fromLink = false;
 	for (;;) {
 		const t = body.match(TRUNCATED_PREFIX_RE);
 		if (t) {
@@ -74,6 +82,12 @@ export function parseVerdictReply(text: string, expandedUrls: string[] = []): Pa
 			body = body.slice(i[0].length);
 			continue;
 		}
+		const l = body.match(LINK_PREFIX_RE);
+		if (l) {
+			fromLink = true;
+			body = body.slice(l[0].length);
+			continue;
+		}
 		break;
 	}
 
@@ -85,6 +99,7 @@ export function parseVerdictReply(text: string, expandedUrls: string[] = []): Pa
 				historyUuid,
 				truncated,
 				fromImage,
+				fromLink,
 				shortTextDisclaimer: DISCLAIMER_RE.test(body)
 			};
 		}
