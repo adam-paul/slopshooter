@@ -1,4 +1,4 @@
-# pangram-leaderboard
+# slopshooter
 
 Tracks @pangram's AI-detection verdict replies on X and ranks the taggers.
 Read README.md first; deep background in docs/RESEARCH.md.

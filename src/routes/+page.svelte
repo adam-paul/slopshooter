@@ -6,7 +6,7 @@
 </script>
 
 <svelte:head>
-	<title>Pangram Leaderboard — who has the best eye for slop?</title>
+	<title>Slopshooter — who has the best eye for slop?</title>
 	<meta
 		name="description"
 		content="Tracking the verdicts @pangram hands out on X. Which taggers actually catch AI slop?"

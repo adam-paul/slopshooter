@@ -1,4 +1,4 @@
-# Pangram Leaderboard
+# Slopshooter
 
 Unofficial tracker of the AI-detection verdicts [@pangram](https://x.com/pangram) posts on X.
 People tag the bot to check whether a post is AI slop; this site scores the taggers — who
@@ -41,7 +41,7 @@ bun install
 bunx wrangler login
 
 # 1. Create the database, then paste the printed database_id into wrangler.jsonc
-bunx wrangler d1 create pangram-leaderboard
+bunx wrangler d1 create slopshooter
 
 # 2. Apply migrations (migrations/ is generated from src/lib/server/db/schema.ts)
 bun run db:migrate:remote

@@ -9,7 +9,7 @@
 </script>
 
 <svelte:head>
-	<title>@{data.handle} — Pangram Leaderboard</title>
+	<title>@{data.handle} — Slopshooter</title>
 </svelte:head>
 
 <nav class="crumb"><a href="/">← leaderboard</a></nav>

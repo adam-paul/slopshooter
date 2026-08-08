@@ -1,5 +1,5 @@
 {
-	"name": "pangram-leaderboard",
+	"name": "slopshooter",
 	"private": true,
 	"version": "0.0.1",
 	"type": "module",
@@ -13,8 +13,8 @@
 		"test": "bun test",
 		"poll": "bun run pipeline/poll.ts",
 		"db:generate": "drizzle-kit generate",
-		"db:migrate:local": "wrangler d1 migrations apply pangram-leaderboard --local",
-		"db:migrate:remote": "wrangler d1 migrations apply pangram-leaderboard --remote",
+		"db:migrate:local": "wrangler d1 migrations apply slopshooter --local",
+		"db:migrate:remote": "wrangler d1 migrations apply slopshooter --remote",
 		"deploy": "vite build && wrangler deploy"
 	},
 	"devDependencies": {

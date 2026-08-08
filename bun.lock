@@ -3,7 +3,7 @@
   "configVersion": 1,
   "workspaces": {
     "": {
-      "name": "pangram-leaderboard",
+      "name": "slopshooter",
       "dependencies": {
         "drizzle-orm": "^0.45.2",
       },

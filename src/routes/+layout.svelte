@@ -10,7 +10,7 @@
 
 <div class="shell">
 	<header>
-		<a href="/" class="logo">🔎 Pangram Leaderboard</a>
+		<a href="/" class="logo">🎯 Slopshooter</a>
 		<span class="tagline">who actually spots the slop?</span>
 	</header>
 
