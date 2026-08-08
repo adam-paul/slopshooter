@@ -1,0 +1,22 @@
+{
+	"$schema": "node_modules/wrangler/config-schema.json",
+	"name": "pangram-leaderboard",
+	"main": ".svelte-kit/cloudflare/_worker.js",
+	"compatibility_date": "2026-08-01",
+	"assets": {
+		"directory": ".svelte-kit/cloudflare",
+		"binding": "ASSETS"
+	},
+	"observability": {
+		"enabled": true
+	},
+	"d1_databases": [
+		{
+			"binding": "DB",
+			"database_name": "pangram-leaderboard",
+			// Replace after `wrangler d1 create pangram-leaderboard` (see README).
+			"database_id": "REPLACE_WITH_D1_DATABASE_ID",
+			"migrations_dir": "migrations"
+		}
+	]
+}

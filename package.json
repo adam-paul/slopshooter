@@ -1,0 +1,35 @@
+{
+	"name": "pangram-leaderboard",
+	"private": true,
+	"version": "0.0.1",
+	"type": "module",
+	"scripts": {
+		"dev": "vite dev",
+		"build": "vite build",
+		"preview": "vite preview",
+		"prepare": "svelte-kit sync || echo ''",
+		"check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
+		"check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",
+		"test": "bun test",
+		"poll": "bun run pipeline/poll.ts",
+		"db:generate": "drizzle-kit generate",
+		"db:migrate:local": "wrangler d1 migrations apply pangram-leaderboard --local",
+		"db:migrate:remote": "wrangler d1 migrations apply pangram-leaderboard --remote",
+		"deploy": "vite build && wrangler deploy"
+	},
+	"devDependencies": {
+		"@cloudflare/workers-types": "^5.20260808.1",
+		"@sveltejs/adapter-cloudflare": "^7.2.9",
+		"@sveltejs/kit": "^2.63.0",
+		"@sveltejs/vite-plugin-svelte": "^7.1.2",
+		"drizzle-kit": "^0.31.10",
+		"svelte": "^5.56.1",
+		"svelte-check": "^4.6.0",
+		"typescript": "^6.0.3",
+		"vite": "^8.0.16",
+		"wrangler": "^4.120.0"
+	},
+	"dependencies": {
+		"drizzle-orm": "^0.45.2"
+	}
+}

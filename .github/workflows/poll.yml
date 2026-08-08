@@ -1,0 +1,33 @@
+name: poll
+
+on:
+  schedule:
+    # Every 15 minutes. GitHub delays scheduled runs under load — fine here,
+    # the cursor makes every run incremental regardless of when it fires.
+    - cron: '*/15 * * * *'
+  workflow_dispatch:
+    inputs:
+      args:
+        description: 'Extra poll.ts args (e.g. "--dry-run" or "--ignore-cursor --max-pages=200")'
+        required: false
+        default: ''
+
+concurrency:
+  group: poll
+  cancel-in-progress: false
+
+jobs:
+  poll:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+      - run: bun install --frozen-lockfile
+      - name: Poll @pangram and write verdicts to D1
+        run: bun run pipeline/poll.ts ${{ inputs.args }}
+        env:
+          TWITTERAPI_IO_KEY: ${{ secrets.TWITTERAPI_IO_KEY }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          CLOUDFLARE_D1_DATABASE_ID: ${{ secrets.CLOUDFLARE_D1_DATABASE_ID }}
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
