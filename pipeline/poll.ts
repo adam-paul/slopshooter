@@ -2,12 +2,17 @@
  * Poll @pangram's replies, parse verdicts, write to D1.
  *
  * Usage:
- *   bun run pipeline/poll.ts                     # incremental (cursor-based), max 5 pages
+ *   bun run pipeline/poll.ts                     # incremental: pages until the stored cursor
  *   bun run pipeline/poll.ts --dry-run           # fetch + parse, print, write nothing
  *   bun run pipeline/poll.ts --max-pages=500 --ignore-cursor   # backfill mode
  *
  * Env (see .env.example): TWITTERAPI_IO_KEY, CLOUDFLARE_ACCOUNT_ID,
  * CLOUDFLARE_D1_DATABASE_ID, CLOUDFLARE_API_TOKEN.
+ *
+ * Cursor safety: the cursor only advances when this run verifiably connected to
+ * the previous one (reached the stored cursor while paging). If --max-pages is
+ * exhausted first, rows are still written (inserts dedupe) but the cursor stays
+ * put and the run emits a coverage-gap annotation.
  *
  * Backfill note: the timeline endpoint may not reach past X's ~3,200-status
  * window; the bot has ~9.4k lifetime statuses. For the full corpus, seed from
@@ -21,6 +26,8 @@ import type { NormalizedTweet } from './lib/types';
 
 const BOT_HANDLE = 'pangram';
 const CURSOR_KEY = 'last_seen_tweet_id';
+/** Safety valve, not a target: incremental runs stop at the cursor long before this. */
+const DEFAULT_MAX_PAGES = 50;
 
 interface PendingVerdict {
 	tweet: NormalizedTweet;
@@ -39,6 +46,25 @@ function arg(name: string): string | boolean | undefined {
 	return hit.includes('=') ? hit.split('=').slice(1).join('=') : true;
 }
 
+/** Bare `--flag`, `--flag=true/1`, `--flag=false/0`. Anything else aborts the run. */
+function boolArg(name: string): boolean {
+	const v = arg(name);
+	if (v === undefined) return false;
+	if (v === true || v === 'true' || v === '1') return true;
+	if (v === 'false' || v === '0') return false;
+	throw new Error(`Invalid value for --${name}: "${String(v)}" (expected true/false)`);
+}
+
+function intArg(name: string, fallback: number): number {
+	const v = arg(name);
+	if (v === undefined) return fallback;
+	const n = Number(v);
+	if (!Number.isInteger(n) || n <= 0) {
+		throw new Error(`Invalid value for --${name}: "${String(v)}" (expected a positive integer)`);
+	}
+	return n;
+}
+
 /** Compare two decimal snowflake ids. */
 function cmpIds(a: string, b: string): number {
 	const x = BigInt(a);
@@ -46,10 +72,25 @@ function cmpIds(a: string, b: string): number {
 	return x < y ? -1 : x > y ? 1 : 0;
 }
 
+const TWITTER_EPOCH_MS = 1288834974657;
+
+/** Snowflake ids encode their creation time — the fallback when created-at fails to parse. */
+function snowflakeToUnixSeconds(id: string): number {
+	try {
+		return Math.floor((Number(BigInt(id) >> 22n) + TWITTER_EPOCH_MS) / 1000);
+	} catch {
+		return 0;
+	}
+}
+
+function fmtDate(unixSeconds: number): string {
+	return unixSeconds > 0 ? new Date(unixSeconds * 1000).toISOString() : 'BAD-DATE';
+}
+
 async function main() {
-	const dryRun = arg('dry-run') === true;
-	const ignoreCursor = arg('ignore-cursor') === true;
-	const maxPages = Number(arg('max-pages') ?? 5);
+	const dryRun = boolArg('dry-run');
+	const ignoreCursor = boolArg('ignore-cursor');
+	const maxPages = intArg('max-pages', DEFAULT_MAX_PAGES);
 
 	const api = new TwitterApiClient(requireEnv('TWITTERAPI_IO_KEY'));
 	const d1 = dryRun
@@ -103,6 +144,10 @@ async function main() {
 		cursor = nextCursor;
 	}
 
+	// Coverage is contiguous when there was no previous cursor (first run /
+	// backfill) or we paged all the way back to it.
+	const coverageComplete = sinceId === null || reachedCursor;
+
 	console.log(
 		`Fetched ${pages} page(s): ${verdicts.length} verdict(s), ${quarantined.length} quarantined, ${skipped} non-verdict tweet(s) skipped.`
 	);
@@ -133,51 +178,75 @@ async function main() {
 		for (const { tweet, parsed } of verdicts.slice(0, 20)) {
 			const summons = summonsMap.get(tweet.inReplyToTweetId ?? '');
 			console.log(
-				`[${parsed.label.toUpperCase().padEnd(5)}] @${tweet.inReplyToHandle ?? summons?.authorHandle ?? '?'} -> ` +
+				`[${parsed.label.toUpperCase().padEnd(5)}] ${fmtDate(tweet.createdAt)} @${tweet.inReplyToHandle ?? summons?.authorHandle ?? '?'} -> ` +
 					`checked=${checkedIdOf(summons) ?? '?'} uuid=${parsed.historyUuid ?? '-'} | ${tweet.text.slice(0, 80)}`
 			);
 		}
 		for (const t of quarantined) console.log(`[QUARANTINE] ${t.id}: ${t.text.slice(0, 120)}`);
+		if (!coverageComplete) console.log(`(coverage gap: --max-pages=${maxPages} exhausted before cursor ${sinceId})`);
 		console.log('(dry run — nothing written)');
 		return;
 	}
 	if (!d1) return;
 
 	const now = Math.floor(Date.now() / 1000);
-	let inserted = 0;
+
+	const rowsParams: unknown[][] = [];
 	for (const { tweet, parsed } of verdicts) {
 		const summons = summonsMap.get(tweet.inReplyToTweetId ?? '');
 		const checkedId = checkedIdOf(summons);
 		const checked = checkedId ? checkedMap.get(checkedId) : undefined;
-		const res = await d1.query(
+
+		let verdictAt = tweet.createdAt;
+		if (verdictAt === 0) {
+			verdictAt = snowflakeToUnixSeconds(tweet.id);
+			console.log(
+				`::warning title=Unparseable tweet date::Tweet ${tweet.id} had no parseable created-at; derived ${fmtDate(verdictAt)} from its snowflake id. Check normalizeTweet()'s date mapping.`
+			);
+		}
+
+		rowsParams.push([
+			tweet.id,
+			parsed.historyUuid,
+			parsed.label,
+			tweet.inReplyToUserId ?? summons?.authorId ?? null,
+			tweet.inReplyToHandle ?? summons?.authorHandle ?? null,
+			tweet.inReplyToTweetId,
+			summons?.text ?? null,
+			checkedId,
+			checked?.authorHandle ?? summons?.quotedAuthorHandle ?? null,
+			parsed.shortTextDisclaimer ? 1 : 0,
+			parsed.truncated ? 1 : 0,
+			parsed.fromImage ? 1 : 0,
+			tweet.text,
+			verdictAt,
+			now
+		]);
+	}
+
+	// 15 bound params per row; D1 caps queries at 100 params -> 6 rows per statement.
+	const ROW_SQL = '(?, ?, ?, NULL, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)';
+	const CHUNK = 6;
+	let inserted = 0;
+	let insertedExact = true;
+	for (let i = 0; i < rowsParams.length; i += CHUNK) {
+		const chunk = rowsParams.slice(i, i + CHUNK);
+		const { meta } = await d1.queryWithMeta(
 			`INSERT INTO verdicts (
 				verdict_tweet_id, history_uuid, verdict, pct_ai,
 				tagger_id, tagger_handle, summons_id, summons_text,
 				checked_post_id, checked_author_handle,
 				short_text_disclaimer, truncated, from_image,
 				raw_text, verdict_at, ingested_at
-			) VALUES (?, ?, ?, NULL, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+			) VALUES ${chunk.map(() => ROW_SQL).join(', ')}
 			ON CONFLICT(verdict_tweet_id) DO NOTHING`,
-			[
-				tweet.id,
-				parsed.historyUuid,
-				parsed.label,
-				tweet.inReplyToUserId ?? summons?.authorId ?? null,
-				tweet.inReplyToHandle ?? summons?.authorHandle ?? null,
-				tweet.inReplyToTweetId,
-				summons?.text ?? null,
-				checkedId,
-				checked?.authorHandle ?? summons?.quotedAuthorHandle ?? null,
-				parsed.shortTextDisclaimer ? 1 : 0,
-				parsed.truncated ? 1 : 0,
-				parsed.fromImage ? 1 : 0,
-				tweet.text,
-				tweet.createdAt,
-				now
-			]
+			chunk.flat()
 		);
-		void res;
-		inserted++;
+		if (typeof meta?.changes === 'number') inserted += meta.changes;
+		else {
+			inserted += chunk.length;
+			insertedExact = false;
+		}
 	}
 
 	for (const t of quarantined) {
@@ -188,7 +257,7 @@ async function main() {
 		);
 	}
 
-	if (maxSeenId !== null) {
+	if (maxSeenId !== null && coverageComplete) {
 		await d1.query(
 			`INSERT INTO ingest_state (key, value) VALUES (?, ?)
 			 ON CONFLICT(key) DO UPDATE SET value = excluded.value`,
@@ -196,7 +265,15 @@ async function main() {
 		);
 	}
 
-	console.log(`Wrote ${inserted} verdict(s), ${quarantined.length} quarantine row(s). Cursor -> ${maxSeenId ?? '(unchanged)'}`);
+	console.log(
+		`Wrote ${inserted}${insertedExact ? '' : ' (attempted)'} new verdict(s) of ${verdicts.length} fetched, ${quarantined.length} quarantine row(s). Cursor -> ${coverageComplete ? (maxSeenId ?? '(unchanged)') : '(NOT advanced)'}`
+	);
+
+	if (!coverageComplete) {
+		console.log(
+			`::error title=Poll coverage gap::Exhausted --max-pages=${maxPages} before reaching stored cursor ${sinceId}. This run's rows are saved (inserts dedupe), but a gap remains and the cursor was NOT advanced. Trigger the workflow manually with args "--ignore-cursor --max-pages=500" to close it.`
+		);
+	}
 
 	if (quarantined.length > 0) {
 		// GitHub Actions annotation — the format-drift alarm.

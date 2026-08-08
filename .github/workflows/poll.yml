@@ -19,7 +19,9 @@ concurrency:
 jobs:
   poll:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    # Generous for manual backfill runs (hundreds of pages + D1 writes); the
+    # concurrency group already serializes runs, so a long one can't stampede.
+    timeout-minutes: 60
     steps:
       - uses: actions/checkout@v4
       - uses: oven-sh/setup-bun@v2

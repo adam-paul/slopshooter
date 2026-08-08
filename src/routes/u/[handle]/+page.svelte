@@ -4,7 +4,7 @@
 
 	let { data }: { data: PageData } = $props();
 
-	const total = $derived(data.counts.ai + data.counts.mix + data.counts.human);
+	const total = $derived(data.totalChecks);
 	const hitRate = $derived(total > 0 ? Math.round((100 * data.counts.ai) / total) : 0);
 </script>
 
@@ -31,6 +31,10 @@
 	</div>
 	<div class="stat"><span class="num">{hitRate}%</span><span class="lbl">hit rate</span></div>
 </section>
+
+{#if total > data.verdicts.length}
+	<p class="dim feednote">Showing the latest {data.verdicts.length} of {total} checks.</p>
+{/if}
 
 <ul class="feed">
 	{#each data.verdicts as v (v.verdictTweetId)}
@@ -60,6 +64,10 @@
 	.crumb {
 		margin: 1rem 0;
 		font-size: 0.85rem;
+	}
+	.feednote {
+		font-size: 0.8rem;
+		margin: 0 0 0.5rem;
 	}
 	h1 {
 		font-size: 1.4rem;

@@ -35,7 +35,16 @@ describe('current template (Aug 2026)', () => {
 		}
 	});
 
-	test('mix verdict', () => {
+	test('mix verdict (verbatim observed wording)', () => {
+		const r = parseVerdictReply(
+			'@u We believe that this entire text is a mix of AI and human-written content. https://t.co/x',
+			[HISTORY_URL]
+		);
+		expect(r.kind).toBe('verdict');
+		if (r.kind === 'verdict') expect(r.label).toBe('mix');
+	});
+
+	test('mix verdict (defensive "this text" variant)', () => {
 		const r = parseVerdictReply(
 			'@u We believe that this text is a mix of AI and human-written content. https://t.co/x',
 			[HISTORY_URL]

@@ -25,14 +25,14 @@ const HISTORY_URL_RE = /pangram\.com\/history\/([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0
  *                  "We believe that this document is AI-assisted, but not fully AI-generated."
  *   Aug 2026:      "We believe that this entire text is AI."
  *                  "We believe that this entire text is human-written."
- *                  "We believe that this text is a mix of AI and human-written content."
+ *                  "We believe that this entire text is a mix of AI and human-written content."
  *
  * ORDER MATTERS: mixed-verdict patterns must precede the plain AI pattern, or
  * "AI-assisted, but not fully AI-generated" would be misread as 'ai'.
  */
 const TEMPLATES: Array<{ re: RegExp; label: VerdictLabel }> = [
-	{ re: /^We believe that this (?:document|text) is AI-assisted, but not fully AI-generated\b/, label: 'mix' },
-	{ re: /^We believe that this text is a mix of AI and human-written content\b/, label: 'mix' },
+	{ re: /^We believe that this (?:document|entire text|text) is AI-assisted, but not fully AI-generated\b/, label: 'mix' },
+	{ re: /^We believe that this (?:entire )?text is a mix of AI and human-written content\b/, label: 'mix' },
 	{ re: /^We believe that this document is a mix of AI-generated,(?: AI-assisted,)? and human-written content\b/, label: 'mix' },
 	{ re: /^We (?:believe|are confident) that this (?:document|entire text|text) is (?:fully )?AI(?:-generated)?\.?(?:\s|$)/, label: 'ai' },
 	{ re: /^We (?:believe|are confident) that this (?:document|entire text|text) is (?:fully )?human-written\b/, label: 'human' },

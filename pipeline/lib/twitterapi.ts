@@ -68,15 +68,17 @@ export function normalizeTweet(t: any): NormalizedTweet {
 	const author = t.author ?? t.user ?? {};
 	const quoted = t.quoted_tweet ?? t.quotedTweet ?? null;
 	return {
-		id: str(t.id ?? t.id_str ?? t.tweet_id) ?? '',
+		// Prefer string-typed id fields: a legacy payload's numeric `id` has already
+		// lost precision beyond 2^53 by the time JSON.parse hands it to us.
+		id: str(t.id_str ?? t.tweet_id ?? t.id) ?? '',
 		text: t.text ?? t.full_text ?? '',
 		createdAt: parseTweetDate(t.createdAt ?? t.created_at),
-		authorId: str(author.id ?? author.id_str ?? t.author_id),
+		authorId: str(author.id_str ?? t.author_id ?? author.id),
 		authorHandle: author.userName ?? author.username ?? author.screen_name ?? null,
-		inReplyToTweetId: str(t.inReplyToId ?? t.in_reply_to_status_id_str ?? t.in_reply_to_status_id),
-		inReplyToUserId: str(t.inReplyToUserId ?? t.in_reply_to_user_id_str ?? t.in_reply_to_user_id),
+		inReplyToTweetId: str(t.in_reply_to_status_id_str ?? t.inReplyToId ?? t.in_reply_to_status_id),
+		inReplyToUserId: str(t.in_reply_to_user_id_str ?? t.inReplyToUserId ?? t.in_reply_to_user_id),
 		inReplyToHandle: t.inReplyToUsername ?? t.in_reply_to_screen_name ?? null,
-		quotedTweetId: str(quoted?.id ?? quoted?.id_str ?? t.quoted_status_id_str),
+		quotedTweetId: str(quoted?.id_str ?? t.quoted_status_id_str ?? quoted?.id),
 		quotedAuthorHandle: quoted?.author?.userName ?? quoted?.user?.screen_name ?? null,
 		expandedUrls: (t.entities?.urls ?? [])
 			.map((u: any) => u.expanded_url ?? u.expandedUrl ?? u.url)
