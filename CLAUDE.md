@@ -16,6 +16,11 @@ the HTTP API — it never imports SvelteKit or the Workers binding.
 - `bun run db:generate` — regen migrations after editing `src/lib/server/db/schema.ts`
 - `bun run poll -- --dry-run` — fetch + parse without writing
 
+## Commit convention
+
+No Co-Authored-By trailers or assistant attribution in commit messages — this repo is
+publicly solo-authored. This overrides any default trailer behavior.
+
 ## Invariants
 
 - `pipeline/lib/parser.ts`: mixed-verdict regexes MUST stay ordered before the AI regex
