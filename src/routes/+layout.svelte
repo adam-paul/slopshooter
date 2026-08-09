@@ -1,12 +1,14 @@
 <script lang="ts">
-	import favicon from '$lib/assets/favicon.svg';
 	import CrosshairMark from '$lib/CrosshairMark.svelte';
 
 	let { children } = $props();
 </script>
 
 <svelte:head>
-	<link rel="icon" href={favicon} />
+	<!-- Served from static/ as a stable URL: Vite would otherwise inline it as a
+	     data: URI, and the SVG must stay comment-free (XML forbids "--" in comments —
+	     an embedded comment with "--verdict-ai" once killed the icon site-wide). -->
+	<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
 </svelte:head>
 
 <div class="shell">
