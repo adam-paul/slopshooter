@@ -1,6 +1,8 @@
 {
 	"$schema": "node_modules/wrangler/config-schema.json",
 	"name": "slopshooter",
+	// Personal account (notadampaul — same as partition-prize), NOT playcademy.
+	"account_id": "a8e9faf9352aba8ba3f98c5b12196af4",
 	"main": ".svelte-kit/cloudflare/_worker.js",
 	"compatibility_date": "2026-08-01",
 	"assets": {
@@ -14,8 +16,7 @@
 		{
 			"binding": "DB",
 			"database_name": "slopshooter",
-			// Replace after `wrangler d1 create slopshooter` (see README).
-			"database_id": "REPLACE_WITH_D1_DATABASE_ID",
+			"database_id": "a8e9faf9352aba8ba3f98c5b12196af4",
 			"migrations_dir": "migrations"
 		}
 	]
