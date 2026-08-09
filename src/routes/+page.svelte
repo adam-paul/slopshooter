@@ -56,7 +56,7 @@
 		<div class="statrow">
 			<StatBlock
 				value={formatCount(data.totals.checks)}
-				label="checks tracked"
+				label="slopvestigations"
 				accent="var(--verdict-ai)"
 			/>
 			<StatBlock
@@ -66,7 +66,7 @@
 			/>
 			<StatBlock
 				value={formatCount(data.totals.taggers)}
-				label="distinct taggers"
+				label="unique slopshooters"
 				accent="var(--verdict-human)"
 			/>
 		</div>
