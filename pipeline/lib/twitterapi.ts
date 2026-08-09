@@ -83,6 +83,25 @@ export class TwitterApiClient {
 	}
 
 	/**
+	 * One page of advanced search, newest first. Reaches past the timeline's
+	 * ~3,200-status window. Envelope verified live 2026-08-09:
+	 * { tweets, has_next_page, next_cursor } at the top level.
+	 */
+	async searchAdvanced(
+		query: string,
+		cursor?: string
+	): Promise<{ tweets: NormalizedTweet[]; nextCursor: string | null }> {
+		const json = await this.get('/twitter/tweet/advanced_search', {
+			query,
+			queryType: 'Latest',
+			...(cursor ? { cursor } : {})
+		});
+		const raw: any[] = json?.tweets ?? json?.data?.tweets ?? [];
+		const next = json?.has_next_page ? (json?.next_cursor ?? null) : null;
+		return { tweets: raw.map(normalizeTweet), nextCursor: next ? String(next) : null };
+	}
+
+	/**
 	 * Batch tweet hydration by id (chunks of 100). Hydration is ENRICHMENT —
 	 * tagger attribution lives on the verdict tweet itself — so a chunk that
 	 * still fails after retries is logged and skipped, never fatal.

@@ -21,6 +21,8 @@ only as an escape hatch when CI is down.
 - `bun run check` — svelte-check
 - `bun run db:generate` — regen migrations after editing `src/lib/server/db/schema.ts`
 - `bun run poll -- --dry-run` — fetch + parse without writing
+- `bun run backfill` — deep history via search windows + Wayback sweep (never touches the
+  poller's cursor; upserts are safe to re-run)
 
 ## Design
 
