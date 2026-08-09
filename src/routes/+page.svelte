@@ -150,14 +150,6 @@
 					</table>
 				</div>
 			{/if}
-
-			<p class="qualnote mono dim">
-				{data.leaderboard.length === 1
-					? '1 slopshooter qualifies'
-					: `${data.leaderboard.length} slopshooters qualify`}{data.range === 'week'
-					? ' this week'
-					: ''} — five tags to join them.
-			</p>
 		{/if}
 	</div>
 </section>
@@ -388,10 +380,6 @@
 	}
 	.score {
 		font-weight: 600;
-	}
-	.qualnote {
-		font-size: 0.7rem;
-		margin: 1rem 0 0;
 	}
 	.small {
 		font-size: 0.78rem;
