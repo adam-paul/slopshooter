@@ -9,6 +9,12 @@ Bun + SvelteKit (Svelte 5 runes) on Cloudflare Workers · D1 + Drizzle · pipeli
 Bun scripts run by GitHub Actions cron (`.github/workflows/poll.yml`), writing to D1 over
 the HTTP API — it never imports SvelteKit or the Workers binding.
 
+## Deploys
+
+Push to master IS the deploy (Cloudflare Workers Builds is connected to the repo).
+Never run `bun run deploy` after pushing — it double-ships the same commit. It exists
+only as an escape hatch when CI is down.
+
 ## Commands
 
 - `bun test` — parser tests (the ones that matter)
