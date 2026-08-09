@@ -45,17 +45,26 @@ async function fetchWaybackIds(): Promise<string[]> {
 	for (const host of ['twitter.com', 'x.com']) {
 		// Pre-rename captures live under the old handle's path.
 		for (const handle of ['pangram', 'pangramlabs']) {
-			const url = `https://web.archive.org/cdx/search/cdx?url=${host}/${handle}/status*&output=text&fl=original&collapse=urlkey&limit=10000`;
+			// matchType=prefix, not a trailing wildcard — the wildcard form silently
+			// returns nothing for path prefixes (verified live 2026-08-09).
+			const url = `https://web.archive.org/cdx/search/cdx?url=${encodeURIComponent(`${host}/${handle}/status`)}&matchType=prefix&output=text&fl=original&collapse=urlkey&limit=10000`;
 			try {
 				const res = await fetch(url);
 				if (!res.ok) {
+					console.log(`  CDX ${host}/${handle}: HTTP ${res.status}`);
 					await res.body?.cancel();
 					continue;
 				}
 				const text = await res.text();
-				for (const m of text.matchAll(/\/status(?:es)?\/(\d{10,20})/g)) ids.add(m[1]);
-			} catch {
+				let n = 0;
+				for (const m of text.matchAll(/\/status(?:es)?\/(\d{10,20})/g)) {
+					ids.add(m[1]);
+					n++;
+				}
+				console.log(`  CDX ${host}/${handle}: ${n} archived status urls`);
+			} catch (err) {
 				// CDX is best-effort; a dead endpoint must not kill the backfill.
+				console.log(`  CDX ${host}/${handle}: failed (${err instanceof Error ? err.message : err})`);
 			}
 		}
 	}
@@ -73,6 +82,7 @@ interface Tally {
 async function main() {
 	const dryRun = boolArg('dry-run');
 	const wayback = !boolArg('no-wayback');
+	const waybackOnly = boolArg('wayback-only');
 	const windowDays = intArg('window-days', 7);
 	const maxPagesPerWindow = intArg('max-pages-per-window', 60);
 	const since = dateArg('since', DEFAULT_SINCE);
@@ -88,10 +98,22 @@ async function main() {
 				requireEnv('D1_API_TOKEN')
 			);
 
+	// Read-only D1 for dry-run: lets the Wayback phase filter against the real
+	// tables (else a dry run would hydrate — and pay for — thousands of archived
+	// ids the wet run would skip). Optional: dry-run still works without creds.
+	const d1Read =
+		d1 ??
+		(process.env.CLOUDFLARE_ACCOUNT_ID && process.env.CLOUDFLARE_D1_DATABASE_ID && process.env.D1_API_TOKEN
+			? new D1HttpClient(
+					process.env.CLOUDFLARE_ACCOUNT_ID,
+					process.env.CLOUDFLARE_D1_DATABASE_ID,
+					process.env.D1_API_TOKEN
+				)
+			: null);
+
 	const now = Math.floor(Date.now() / 1000);
 	const seen = new Set<string>();
 	const total: Tally = { fetched: 0, verdicts: 0, quarantined: 0, skipped: 0, upserted: 0 };
-	let totalQuarantineRows = 0;
 
 	const classify = (
 		tweets: NormalizedTweet[],
@@ -123,7 +145,6 @@ async function main() {
 		} else {
 			printRows(rows, 5);
 		}
-		totalQuarantineRows += quarantined.length;
 		total.fetched += tally.fetched;
 		total.verdicts += tally.verdicts;
 		total.quarantined += tally.quarantined;
@@ -132,7 +153,11 @@ async function main() {
 	};
 
 	// ---- Phase 1: search index, oldest window first, 1-day overlap. ----
-	for (let start = since.getTime(); start < until.getTime(); start += windowDays * DAY_MS) {
+	for (
+		let start = since.getTime();
+		!waybackOnly && start < until.getTime();
+		start += windowDays * DAY_MS
+	) {
 		const wSince = isoDay(new Date(start));
 		// Overlap by a day: the provider's until: boundary bleeds; dedupe absorbs it.
 		const wUntil = isoDay(new Date(Math.min(start + (windowDays + 1) * DAY_MS, until.getTime() + DAY_MS)));
@@ -144,15 +169,22 @@ async function main() {
 
 		let cursor: string | undefined;
 		let pages = 0;
-		while (pages < maxPagesPerWindow) {
+		let truncated = false;
+		while (true) {
 			const { tweets, nextCursor } = await api.searchAdvanced(query, cursor);
 			if (tweets.length === 0) break;
 			pages++;
 			classify(tweets, pending, quarantined, tally);
 			if (!nextCursor) break;
+			// Truncated only when a cursor remains unconsumed — a window whose
+			// pagination ends naturally ON the cap is fully covered.
+			if (pages >= maxPagesPerWindow) {
+				truncated = true;
+				break;
+			}
 			cursor = nextCursor;
 		}
-		if (pages >= maxPagesPerWindow) {
+		if (truncated) {
 			console.log(`::warning title=Backfill window truncated::${wSince}..${wUntil} hit --max-pages-per-window=${maxPagesPerWindow}; narrow --window-days to cover it fully.`);
 		}
 
@@ -165,25 +197,39 @@ async function main() {
 	// ---- Phase 2: Wayback CDX sweep for ids the search index missed. ----
 	if (wayback) {
 		const waybackIds = await fetchWaybackIds();
-		const existing = new Set<string>(
-			d1
-				? (await d1.query<{ verdict_tweet_id: string }>('SELECT verdict_tweet_id FROM verdicts')).map(
-						(r) => r.verdict_tweet_id
-					)
-				: []
-		);
-		const todo = waybackIds.filter((id) => !seen.has(id) && !existing.has(id));
-		console.log(`Wayback: ${waybackIds.length} archived ids, ${todo.length} not otherwise covered.`);
-
-		if (todo.length > 0) {
-			const pending: PendingVerdict[] = [];
-			const quarantined: Quarantined[] = [];
-			const tally: Tally = { fetched: 0, verdicts: 0, quarantined: 0, skipped: 0, upserted: 0 };
-			classify(await api.tweetsByIds(todo), pending, quarantined, tally);
-			await flush(pending, quarantined, tally);
+		if (!d1Read) {
 			console.log(
-				`Wayback: ${tally.fetched} hydrated, ${tally.verdicts} verdicts, ${tally.quarantined} quarantined${d1 ? `, ${tally.upserted} upserted` : ''}`
+				`Wayback: ${waybackIds.length} archived ids. DB filter unavailable (no credentials in dry-run); skipping hydration — the wet run hydrates only ids missing from verdicts.`
 			);
+		} else {
+			const existing = new Set<string>(
+				(
+					await d1Read.query<{ verdict_tweet_id: string }>('SELECT verdict_tweet_id FROM verdicts')
+				).map((r) => r.verdict_tweet_id)
+			);
+			// Ids whose stored text STILL matches no template would just re-quarantine
+			// on every run — exclude them until a parser fix makes them parseable.
+			const stillUnparseable = new Set<string>();
+			for (const q of await d1Read.query<{ tweet_id: string; raw_text: string }>(
+				'SELECT tweet_id, raw_text FROM quarantine'
+			)) {
+				if (parseVerdictReply(q.raw_text, []).kind !== 'verdict') stillUnparseable.add(q.tweet_id);
+			}
+			const todo = waybackIds.filter(
+				(id) => !seen.has(id) && !existing.has(id) && !stillUnparseable.has(id)
+			);
+			console.log(`Wayback: ${waybackIds.length} archived ids, ${todo.length} not otherwise covered.`);
+
+			if (todo.length > 0) {
+				const pending: PendingVerdict[] = [];
+				const quarantined: Quarantined[] = [];
+				const tally: Tally = { fetched: 0, verdicts: 0, quarantined: 0, skipped: 0, upserted: 0 };
+				classify(await api.tweetsByIds(todo), pending, quarantined, tally);
+				await flush(pending, quarantined, tally);
+				console.log(
+					`Wayback: ${tally.fetched} hydrated, ${tally.verdicts} verdicts, ${tally.quarantined} quarantined${d1 ? `, ${tally.upserted} upserted` : ''}`
+				);
+			}
 		}
 	}
 
@@ -192,11 +238,11 @@ async function main() {
 		`TOTAL: ${total.fetched} bot tweets, ${total.verdicts} verdicts, ${total.quarantined} quarantined, ${total.skipped} non-verdict${d1 ? `, ${total.upserted} upserted` : ' (dry run — nothing written)'}`
 	);
 	if (d1) {
-		const [{ n, oldest }] = await d1.query<{ n: number; oldest: number }>(
+		const [{ n, oldest }] = await d1.query<{ n: number; oldest: number | null }>(
 			'SELECT COUNT(*) n, MIN(verdict_at) oldest FROM verdicts'
 		);
 		console.log(
-			`DB now holds ${n} verdicts, oldest ${new Date(oldest * 1000).toISOString().slice(0, 10)} (lifetime estimate ~8,900 as of 2026-08-08).`
+			`DB now holds ${n} verdicts, oldest ${oldest == null ? 'n/a' : new Date(oldest * 1000).toISOString().slice(0, 10)} (lifetime estimate ~8,900 as of 2026-08-08).`
 		);
 	}
 	logDriftWarning(total.quarantined);
