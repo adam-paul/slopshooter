@@ -42,4 +42,4 @@ publicly solo-authored. This overrides any default trailer behavior.
 - Never name an env var `CLOUDFLARE_API_TOKEN` in `.env`: bun auto-loads `.env` into every
   bun/bunx process and wrangler prefers that variable over OAuth, which silently breaks
   `wrangler login`/`whoami`/`deploy` from the repo directory. The pipeline token is
-  `D1_API_TOKEN` (the GitHub secret keeps the old name; the workflow maps it).
+  `D1_API_TOKEN` everywhere — .env, the workflow, and the GitHub secret.
