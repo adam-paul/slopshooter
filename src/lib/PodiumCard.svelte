@@ -22,10 +22,12 @@
 		lastAt: number;
 	} = $props();
 
+	// Only NO.1 wears the brand red (crosshair / DEAD-EYE / card border all match);
+	// 2 and 3 are neutral — rank colors must not borrow the verdict tricolor.
 	const RANK = [
-		{ label: 'NO.1 — DEAD-EYE', color: 'var(--verdict-ai)', border: 'var(--verdict-ai)' },
-		{ label: 'NO.2', color: 'var(--verdict-mixed)', border: 'var(--line)' },
-		{ label: 'NO.3', color: 'var(--verdict-human)', border: 'var(--line)' }
+		{ label: 'NO.1 — DEAD-EYE', color: 'var(--verdict-ai)', score: 'var(--verdict-ai)', border: 'var(--verdict-ai)' },
+		{ label: 'NO.2', color: 'var(--fg-muted)', score: 'var(--fg-1)', border: 'var(--line)' },
+		{ label: 'NO.3', color: 'var(--fg-muted)', score: 'var(--fg-1)', border: 'var(--line)' }
 	];
 	const r = $derived(RANK[Math.min(Math.max(rank, 1), 3) - 1]);
 </script>
@@ -34,7 +36,7 @@
 	<span class="rank mono" style="color:{r.color}">{r.label}</span>
 	<div class="row">
 		<a href="/u/{handle}" class="handle">@{handle}</a>
-		<span class="score mono" style="color:{r.color}">{formatScore(score)}</span>
+		<span class="score mono" style="color:{r.score}">{formatScore(score)}</span>
 	</div>
 	<VerdictSplitBar {ai} {mix} {human} />
 	<span class="meta mono">{checks} checks · {ai} AI / {mix} mixed / {human} human · {timeAgo(lastAt)}</span>
