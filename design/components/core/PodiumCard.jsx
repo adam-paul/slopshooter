@@ -15,7 +15,7 @@ export function PodiumCard({ rank = 1, handle, score, checks, ai, mixed, human, 
         <span style={{ fontFamily: 'var(--font-mono)', fontSize: '1.7rem', fontWeight: 600, fontVariantNumeric: 'tabular-nums', color: r.score }}>{score}</span>
       </div>
       <VerdictSplitBar ai={ai} mixed={mixed} human={human} />
-      <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.72rem', color: 'var(--fg-muted)', display: 'block', marginTop: '0.6rem' }}>{checks} checks · {ai} AI / {mixed} mixed / {human} human · {lastAt}</span>
+      <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.72rem', color: 'var(--fg-muted)', display: 'block', marginTop: '0.6rem' }}>{checks} tags · {ai} AI / {mixed} mixed / {human} human · {lastAt}</span>
     </div>
   );
 }

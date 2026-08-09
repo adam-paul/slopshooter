@@ -39,7 +39,7 @@
 		<span class="score mono" style="color:{r.score}">{formatScore(score)}</span>
 	</div>
 	<VerdictSplitBar {ai} {mix} {human} />
-	<span class="meta mono">{checks} checks · {ai} AI / {mix} mixed / {human} human · {timeAgo(lastAt)}</span>
+	<span class="meta mono">{checks} tags · {ai} AI / {mix} mixed / {human} human · {timeAgo(lastAt)}</span>
 </div>
 
 <style>
