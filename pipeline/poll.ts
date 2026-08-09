@@ -299,7 +299,13 @@ async function main() {
 		const chunk = rows.slice(i, i + CHUNK);
 		const { meta } = await d1.queryWithMeta(
 			`INSERT INTO verdicts (${colNames}) VALUES ${chunk.map(() => rowSql).join(', ')}
-			 ON CONFLICT(verdict_tweet_id) DO NOTHING`,
+			 ON CONFLICT(verdict_tweet_id) DO UPDATE SET
+				summons_id = COALESCE(excluded.summons_id, summons_id),
+				summons_text = COALESCE(excluded.summons_text, summons_text),
+				checked_post_id = COALESCE(excluded.checked_post_id, checked_post_id),
+				checked_author_handle = COALESCE(excluded.checked_author_handle, checked_author_handle),
+				tagger_id = COALESCE(excluded.tagger_id, tagger_id),
+				tagger_handle = COALESCE(excluded.tagger_handle, tagger_handle)`,
 			chunk.flatMap((r) => VERDICT_COLUMNS.map(([, extract]) => extract(r, now)))
 		);
 		inserted += meta?.changes ?? chunk.length;
@@ -323,8 +329,10 @@ async function main() {
 		);
 	}
 
+	// Re-fetched rows upsert (repairing any missing enrichment), so "upserted"
+	// counts both fresh inserts and repairs.
 	console.log(
-		`Wrote ${inserted} new verdict(s) of ${rows.length} fetched, ${quarantined.length} quarantine row(s). Cursor -> ${coverageComplete ? (maxSeenId ?? '(unchanged)') : '(NOT advanced)'}`
+		`Upserted ${inserted} verdict(s) of ${rows.length} fetched, ${quarantined.length} quarantine row(s). Cursor -> ${coverageComplete ? (maxSeenId ?? '(unchanged)') : '(NOT advanced)'}`
 	);
 
 	if (!coverageComplete) {
