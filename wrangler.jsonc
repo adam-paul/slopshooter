@@ -16,7 +16,7 @@
 		{
 			"binding": "DB",
 			"database_name": "slopshooter",
-			"database_id": "a8e9faf9352aba8ba3f98c5b12196af4",
+			"database_id": "435bb16e-5d30-467a-9db2-4993d68ed325",
 			"migrations_dir": "migrations"
 		}
 	]
