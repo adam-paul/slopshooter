@@ -46,7 +46,7 @@ export const load: PageServerLoad = async ({ params, platform }) => {
 
 	const totals = countsRows[0];
 	if (!totals || totals.checks === 0) {
-		error(404, `No tracked checks for @${handle}`);
+		error(404, `No tracked tags for @${handle}`);
 	}
 
 	return {

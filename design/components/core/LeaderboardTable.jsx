@@ -7,7 +7,7 @@ export function LeaderboardTable({ rows = [] }) {
     <div style={{ overflowX: 'auto' }}>
       <style>{'.ss-lb tbody tr:hover{background:var(--bg-hover)}'}</style>
       <table className="ss-lb" style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.88rem' }}>
-        <thead><tr><th style={th('right')}>#</th><th style={th('left')}>Tagger</th><th style={th('right')}>Checks</th><th style={Object.assign(th('left'), { width: '30%' })}>Verdict split</th><th style={th('right')}>Score</th><th style={th('right')}>Last tag</th></tr></thead>
+        <thead><tr><th style={th('right')}>#</th><th style={th('left')}>Tagger</th><th style={th('right')}>Tags</th><th style={Object.assign(th('left'), { width: '30%' })}>Verdict split</th><th style={th('right')}>Score</th><th style={th('right')}>Last tag</th></tr></thead>
         <tbody>
           {rows.map((r) => (
             <tr key={r.handle}>

@@ -25,7 +25,7 @@
 		</div>
 
 		<div class="statrow">
-			<StatBlock value={String(total)} label="checks" accent="var(--line)" />
+			<StatBlock value={String(total)} label="tags" accent="var(--line)" />
 			<StatBlock value={String(data.counts.ai)} label="AI" accent="var(--verdict-ai)" />
 			<StatBlock value={String(data.counts.mix)} label="mixed" accent="var(--verdict-mixed)" />
 			<StatBlock value={String(data.counts.human)} label="human" accent="var(--verdict-human)" />
@@ -36,7 +36,7 @@
 		</div>
 
 		{#if total > data.verdicts.length}
-			<p class="feednote mono dim">showing the latest {data.verdicts.length} of {total} checks</p>
+			<p class="feednote mono dim">showing the latest {data.verdicts.length} of {total} tags</p>
 		{/if}
 
 		<ul class="fresh">

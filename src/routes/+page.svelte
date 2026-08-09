@@ -122,7 +122,7 @@
 							<tr>
 								<th class="r">#</th>
 								<th>Tagger</th>
-								<th class="r">Checks</th>
+								<th class="r">Tags</th>
 								<th class="split-col">Verdict split</th>
 								<th class="r">Score</th>
 								<th class="r last-col">Last tag</th>
