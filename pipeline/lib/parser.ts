@@ -49,6 +49,7 @@ const TEMPLATES: Array<{ re: RegExp; label: VerdictLabel }> = [
 	// Short-label era (observed in the 2026-08 backfill window; predates the
 	// sentence templates on some reply paths):
 	{ re: /^Mostly Human, AI Detected\b/, label: 'mix' },
+	{ re: /^Mostly [Hh]uman [Ww]ritten\b/, label: 'mix' },
 	{ re: /^AI Assisted\b/, label: 'mix' },
 	{ re: /^Fully AI Generated\b/, label: 'ai' },
 	{ re: /^Fully Human Written\b/, label: 'human' }
@@ -71,6 +72,10 @@ const DISCLAIMER_RE = /Disclaimer: For text under \d+ words/;
  * - 'not-verdict':   manual/announcement tweet; safe to ignore.
  */
 export function parseVerdictReply(text: string, expandedUrls: string[] = []): ParseResult {
+	// A retweet is a pointer to a verdict, never a verdict — the original tweet
+	// is ingested separately (observed: the bot occasionally self-RTs).
+	if (/^RT @/.test(text)) return { kind: 'not-verdict' };
+
 	const historyUuid = extractHistoryUuid(text, expandedUrls);
 
 	// Strip the X reply prefix (leading @mentions).

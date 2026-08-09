@@ -189,6 +189,25 @@ describe('launch-era template (Dec 2025)', () => {
 		}
 	});
 
+	test('short-label graded human and self-RT (verbatim, Wayback backfill quarantine)', () => {
+		const mostly = parseVerdictReply(
+			'@a Mostly human written, with small amount of AI content detected https://t.co/q635Xrt7zG',
+			[HISTORY_URL]
+		);
+		expect(mostly.kind).toBe('verdict');
+		if (mostly.kind === 'verdict') expect(mostly.label).toBe('mix');
+
+		const capitalized = parseVerdictReply('@a Mostly Human Written https://t.co/x', [HISTORY_URL]);
+		expect(capitalized.kind).toBe('verdict');
+		if (capitalized.kind === 'verdict') expect(capitalized.label).toBe('mix');
+
+		const rt = parseVerdictReply(
+			'RT @pangram: @Sauers_ @marouane53 AI Detected https://t.co/oIx84Te0eN',
+			[HISTORY_URL]
+		);
+		expect(rt.kind).toBe('not-verdict');
+	});
+
 	test('"No AI Detected" is human, not AI', () => {
 		const r = parseVerdictReply('@a No AI Detected https://t.co/x', [HISTORY_URL]);
 		expect(r.kind).toBe('verdict');
