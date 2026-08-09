@@ -125,7 +125,7 @@
 								<th class="r">Checks</th>
 								<th class="split-col">Verdict split</th>
 								<th class="r">Score</th>
-								<th class="r">Last tag</th>
+								<th class="r last-col">Last tag</th>
 							</tr>
 						</thead>
 						<tbody>
@@ -143,7 +143,7 @@
 										/>
 									</td>
 									<td class="r mono score">{formatScore(row.score)}</td>
-									<td class="r mono dim small">{timeAgo(row.lastAt)}</td>
+									<td class="r mono dim small last-col">{timeAgo(row.lastAt)}</td>
 								</tr>
 							{/each}
 						</tbody>
@@ -369,6 +369,14 @@
 		width: 30%;
 		min-width: 160px;
 		white-space: normal;
+	}
+	/* On phones the table collapses to #, tagger, checks, score — the split bar
+	   and last-tag columns are what forced horizontal scrolling. */
+	@media (max-width: 640px) {
+		.split-col,
+		.last-col {
+			display: none;
+		}
 	}
 	.score {
 		font-weight: 600;
