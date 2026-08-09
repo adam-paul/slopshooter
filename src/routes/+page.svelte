@@ -85,9 +85,9 @@
 					<input
 						type="text"
 						class="search mono"
-						placeholder="find a tagger"
+						placeholder="find a slopshooter"
 						bind:value={search}
-						aria-label="Find a tagger"
+						aria-label="Find a slopshooter"
 					/>
 				</form>
 				<div class="range mono">
