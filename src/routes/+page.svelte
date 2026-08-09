@@ -39,7 +39,7 @@
 	<title>Slopshooter — who is the top slop cop?</title>
 	<meta
 		name="description"
-		content="Tag @pangram under posts you think are AI. We keep score and track who was right."
+		content="Tag @pangram under twitter posts you think are AI. We keep score and compile a leaderboard that ranks our keenest slop detectives."
 	/>
 </svelte:head>
 
@@ -50,8 +50,8 @@
 		<p class="eyebrow mono">The unofficial Pangram leaderboard</p>
 		<h1>Who is the&nbsp;<br /><span class="v-ai">top slop COP</span>?</h1>
 		<p class="sub">
-			Tag @pangram under posts you think are AI. We keep score and track who was right. That's
-			pretty much it.
+			Tag @pangram under twitter posts you think are AI. We keep score and compile a leaderboard
+			that ranks our keenest slop detectives.
 		</p>
 		<div class="statrow">
 			<StatBlock
@@ -157,7 +157,7 @@
 <section class="below">
 	<div class="container twocol">
 		<div>
-			<h2 class="section-title">Fresh verdicts</h2>
+			<h2 class="section-title">Recent slopshots</h2>
 			{#if fresh.length === 0}
 				<p class="empty dim">Nothing yet.</p>
 			{:else}
@@ -190,7 +190,7 @@
 			{/if}
 		</div>
 		<div>
-			<h2 class="section-title">House rules</h2>
+			<h2 class="section-title">How it works</h2>
 			<ol class="rules">
 				<li>
 					<span class="n mono dim">01</span>

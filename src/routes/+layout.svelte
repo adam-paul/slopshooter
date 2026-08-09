@@ -30,10 +30,6 @@
 				Unofficial tracker of the verdicts <a href="https://x.com/pangram" rel="noopener">@pangram</a>
 				posts on X. Not affiliated with Pangram Labs.
 			</p>
-			<p>
-				Pangram's verdicts are a detector's opinion, not ground truth — this site measures
-				agreement with Pangram, nothing more.
-			</p>
 		</div>
 	</footer>
 </div>
