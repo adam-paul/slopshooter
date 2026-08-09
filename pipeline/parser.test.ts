@@ -175,6 +175,20 @@ describe('launch-era template (Dec 2025)', () => {
 		}
 	});
 
+	test('short-label family (verbatim, 2026-08 backfill quarantine)', () => {
+		const cases: Array<[string, string]> = [
+			['@LandoInvests @beaverd Fully Human Written\nhttps://t.co/DstqAICQoD', 'human'],
+			['@TuhinChakr @sofialomart Truncated to 2500 words.\n\nFully AI Generated\nhttps://t.co/UxlnfiwPGV', 'ai'],
+			['@a AI Assisted https://t.co/x', 'mix'],
+			['@a Mostly Human, AI Detected https://t.co/x', 'mix']
+		];
+		for (const [input, expected] of cases) {
+			const r = parseVerdictReply(input, [HISTORY_URL]);
+			expect(r.kind).toBe('verdict');
+			if (r.kind === 'verdict') expect(r.label).toBe(expected);
+		}
+	});
+
 	test('"No AI Detected" is human, not AI', () => {
 		const r = parseVerdictReply('@a No AI Detected https://t.co/x', [HISTORY_URL]);
 		expect(r.kind).toBe('verdict');

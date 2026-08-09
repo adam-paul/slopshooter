@@ -45,7 +45,13 @@ const TEMPLATES: Array<{ re: RegExp; label: VerdictLabel }> = [
 	{ re: /^We (?:believe|are confident) that this (?:document|entire text|text) is (?:fully )?AI(?:-generated)?\.?(?:\s|$)/, label: 'ai' },
 	{ re: /^We (?:believe|are confident) that this (?:document|entire text|text) is (?:fully )?human-written\b/, label: 'human' },
 	{ re: /^No AI Detected\b/, label: 'human' },
-	{ re: /^AI Detected\b/, label: 'ai' }
+	{ re: /^AI Detected\b/, label: 'ai' },
+	// Short-label era (observed in the 2026-08 backfill window; predates the
+	// sentence templates on some reply paths):
+	{ re: /^Mostly Human, AI Detected\b/, label: 'mix' },
+	{ re: /^AI Assisted\b/, label: 'mix' },
+	{ re: /^Fully AI Generated\b/, label: 'ai' },
+	{ re: /^Fully Human Written\b/, label: 'human' }
 ];
 
 const TRUNCATED_PREFIX_RE = /^Truncated to [\d,]+ words\.\s*/;
