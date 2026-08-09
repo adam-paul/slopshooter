@@ -39,3 +39,7 @@ publicly solo-authored. This overrides any default trailer behavior.
 - Raw twitterapi.io payloads are only touched inside `normalizeTweet()`.
 - The poller's cursor (`ingest_state.last_seen_tweet_id`) is the max id SEEN, not max
   verdict id — manual bot replies must not be refetched forever.
+- Never name an env var `CLOUDFLARE_API_TOKEN` in `.env`: bun auto-loads `.env` into every
+  bun/bunx process and wrangler prefers that variable over OAuth, which silently breaks
+  `wrangler login`/`whoami`/`deploy` from the repo directory. The pipeline token is
+  `D1_API_TOKEN` (the GitHub secret keeps the old name; the workflow maps it).

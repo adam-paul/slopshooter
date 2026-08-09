@@ -7,7 +7,7 @@
  *   bun run pipeline/poll.ts --max-pages=500 --ignore-cursor   # backfill mode
  *
  * Env (see .env.example): TWITTERAPI_IO_KEY, CLOUDFLARE_ACCOUNT_ID,
- * CLOUDFLARE_D1_DATABASE_ID, CLOUDFLARE_API_TOKEN.
+ * CLOUDFLARE_D1_DATABASE_ID, D1_API_TOKEN.
  *
  * Cursor safety: the cursor only advances when this run verifiably connected to
  * the previous one (reached the stored cursor while paging). If --max-pages is
@@ -188,7 +188,9 @@ async function main() {
 		: new D1HttpClient(
 				requireEnv('CLOUDFLARE_ACCOUNT_ID'),
 				requireEnv('CLOUDFLARE_D1_DATABASE_ID'),
-				requireEnv('CLOUDFLARE_API_TOKEN')
+				// Not CLOUDFLARE_API_TOKEN — wrangler would hijack that name from
+				// bun's auto-loaded .env and shadow the developer's OAuth login.
+				requireEnv('D1_API_TOKEN')
 			);
 
 	let sinceId: string | null = null;

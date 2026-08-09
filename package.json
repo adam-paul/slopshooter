@@ -15,7 +15,7 @@
 		"db:generate": "drizzle-kit generate",
 		"db:migrate:local": "wrangler d1 migrations apply slopshooter --local",
 		"db:migrate:remote": "wrangler d1 migrations apply slopshooter --remote",
-		"deploy": "vite build && env -u CLOUDFLARE_API_TOKEN wrangler deploy"
+		"deploy": "vite build && wrangler deploy"
 	},
 	"devDependencies": {
 		"@cloudflare/workers-types": "^5.20260808.1",
