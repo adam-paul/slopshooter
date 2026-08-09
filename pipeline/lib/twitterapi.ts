@@ -89,8 +89,9 @@ export class TwitterApiClient {
 	 */
 	async tweetsByIds(ids: string[]): Promise<NormalizedTweet[]> {
 		const out: NormalizedTweet[] = [];
-		for (let i = 0; i < ids.length; i += 100) {
-			const chunk = ids.slice(i, i + 100);
+		// Provider cap verified live: "max 50 tweet_ids per request" (HTTP 400 above it).
+		for (let i = 0; i < ids.length; i += 50) {
+			const chunk = ids.slice(i, i + 50);
 			try {
 				const json = await this.get('/twitter/tweets', { tweet_ids: chunk.join(',') });
 				const raw: any[] = json?.tweets ?? json?.data?.tweets ?? [];

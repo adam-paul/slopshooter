@@ -123,6 +123,23 @@ describe('legacy templates (Feb–Jul 2026)', () => {
 		}
 	});
 
+	test('mixed-family wordings from the 2026-08-09 backfill quarantine (verbatim)', () => {
+		for (const s of [
+			'We believe that this text is a mix of AI, AI-assisted, and human-written content.',
+			'We believe that this text is a mix of AI and AI-assisted content.',
+			'We believe that this document is lightly AI-assisted, but not fully AI-generated.',
+			'We believe that this document is moderately AI-assisted, but not fully AI-generated.',
+			'We believe that this document is primarily AI-generated with some human-written content',
+			'We believe that this document is primarily human-written, with some AI-generated content detected',
+			'We believe that the document contains a mix of AI-assisted and human-written content',
+			'We believe that this document is mainly AI-generated, with some AI-assisted content.'
+		]) {
+			const r = parseVerdictReply(`@a ${s} https://t.co/x`, [HISTORY_URL]);
+			expect(r.kind).toBe('verdict');
+			if (r.kind === 'verdict') expect(r.label).toBe('mix');
+		}
+	});
+
 	test('graded-mix inverse wording is also mix (defensive)', () => {
 		const r = parseVerdictReply(
 			'@a We believe this text is mainly human-written, with some AI content. https://t.co/x',

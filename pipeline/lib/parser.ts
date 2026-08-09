@@ -34,10 +34,14 @@ const HISTORY_URL_RE = /pangram\.com\/history\/([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0
  * "AI-assisted, but not fully AI-generated" would be misread as 'ai'.
  */
 const TEMPLATES: Array<{ re: RegExp; label: VerdictLabel }> = [
-	{ re: /^We believe that this (?:document|entire text|text) is AI-assisted, but not fully AI-generated\b/, label: 'mix' },
-	{ re: /^We believe that this (?:entire )?text is a mix of AI and human-written content\b/, label: 'mix' },
-	{ re: /^We believe (?:that )?this (?:entire )?text is mainly (?:AI|human-written), with some (?:AI(?:-generated)?|human-written) content\b/, label: 'mix' },
-	{ re: /^We believe that this document is a mix of AI-generated,(?: AI-assisted,)? and human-written content\b/, label: 'mix' },
+	// The mixed-verdict family is generalized: live data (198 quarantined rows,
+	// 2026-08-09 backfill) showed the bot grades blends along several axes —
+	// "a mix of <components> content", "<mainly|primarily> X with some Y content
+	// (detected)", "<lightly|moderately> AI-assisted, but not fully AI-generated".
+	// Anything enumerating a blend is 'mix'.
+	{ re: /^We believe that this (?:document|entire text|text) is (?:lightly |moderately |heavily )?AI-assisted, but not fully AI-generated\b/, label: 'mix' },
+	{ re: /^We believe (?:that )?(?:this|the) (?:document|entire text|text) (?:is|contains) a mix of [^.\n]*\bcontent\b/, label: 'mix' },
+	{ re: /^We believe (?:that )?(?:this|the) (?:document|entire text|text) is (?:mainly|primarily|mostly|largely) [^.\n]*\bwith some [^.\n]*\bcontent(?: detected)?\b/, label: 'mix' },
 	{ re: /^We (?:believe|are confident) that this (?:document|entire text|text) is (?:fully )?AI(?:-generated)?\.?(?:\s|$)/, label: 'ai' },
 	{ re: /^We (?:believe|are confident) that this (?:document|entire text|text) is (?:fully )?human-written\b/, label: 'human' },
 	{ re: /^No AI Detected\b/, label: 'human' },
