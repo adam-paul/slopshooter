@@ -90,7 +90,8 @@
 						aria-label="Find a slopshooter"
 					/>
 				</form>
-				<div class="range mono">
+				<!-- noscroll: toggling the range re-runs the load but must not jump the page -->
+				<div class="range mono" data-sveltekit-noscroll data-sveltekit-replacestate>
 					<a href="/?range=week" class:on={data.range === 'week'}>week</a>
 					<a href="/" class:on={data.range === 'all-time'}>all-time</a>
 				</div>
