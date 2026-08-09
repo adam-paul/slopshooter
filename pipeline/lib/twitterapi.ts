@@ -44,7 +44,9 @@ export class TwitterApiClient {
 			if (json?.status && json.status !== 'success') {
 				throw new Error(`twitterapi.io ${path} -> status=${json.status}: ${json.msg ?? json.message ?? 'unknown error'}`);
 			}
-			return json?.data ?? json;
+			// Return the FULL envelope: pagination fields (has_next_page/next_cursor)
+			// live at the top level, siblings of data — unwrapping here would lose them.
+			return json;
 		}
 	}
 
@@ -53,25 +55,25 @@ export class TwitterApiClient {
 		userName: string,
 		cursor?: string
 	): Promise<{ tweets: NormalizedTweet[]; nextCursor: string | null }> {
-		const payload = await this.get('/twitter/user/last_tweets', {
+		const json = await this.get('/twitter/user/last_tweets', {
 			userName,
 			includeReplies: 'true',
 			...(cursor ? { cursor } : {})
 		});
-		const raw: any[] = payload?.tweets ?? [];
-		const hasNext = payload?.has_next_page ?? payload?.hasNextPage ?? false;
-		const next = payload?.next_cursor ?? payload?.nextCursor ?? null;
-		return { tweets: raw.map(normalizeTweet), nextCursor: hasNext && next ? String(next) : null };
+		// Verified envelope (2026-08-09): { status, code, msg, data: { pin_tweet, tweets }, has_next_page, next_cursor }
+		const raw: any[] = json?.data?.tweets ?? json?.tweets ?? [];
+		const next = json?.has_next_page ? (json?.next_cursor ?? null) : null;
+		return { tweets: raw.map(normalizeTweet), nextCursor: next ? String(next) : null };
 	}
 
 	/** Batch tweet hydration by id (chunks of 100). */
 	async tweetsByIds(ids: string[]): Promise<NormalizedTweet[]> {
 		const out: NormalizedTweet[] = [];
 		for (let i = 0; i < ids.length; i += 100) {
-			const payload = await this.get('/twitter/tweets', {
+			const json = await this.get('/twitter/tweets', {
 				tweet_ids: ids.slice(i, i + 100).join(',')
 			});
-			const raw: any[] = payload?.tweets ?? [];
+			const raw: any[] = json?.tweets ?? json?.data?.tweets ?? [];
 			out.push(...raw.map(normalizeTweet));
 		}
 		return out;
