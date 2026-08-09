@@ -39,9 +39,9 @@ const TEMPLATES: Array<{ re: RegExp; label: VerdictLabel }> = [
 	// "a mix of <components> content", "<mainly|primarily> X with some Y content
 	// (detected)", "<lightly|moderately> AI-assisted, but not fully AI-generated".
 	// Anything enumerating a blend is 'mix'.
-	{ re: /^We believe that this (?:document|entire text|text) is (?:lightly |moderately |heavily )?AI-assisted, but not fully AI-generated\b/, label: 'mix' },
-	{ re: /^We believe (?:that )?(?:this|the) (?:document|entire text|text) (?:is|contains) a mix of [^.\n]*\bcontent\b/, label: 'mix' },
-	{ re: /^We believe (?:that )?(?:this|the) (?:document|entire text|text) is (?:mainly|primarily|mostly|largely) [^.\n]*\bwith some [^.\n]*\bcontent(?: detected)?\b/, label: 'mix' },
+	{ re: /^We (?:believe|are confident) that this (?:document|entire text|text) is (?:lightly |moderately |heavily )?AI-assisted, but not fully AI-generated\b/, label: 'mix' },
+	{ re: /^We (?:believe|are confident) (?:that )?(?:this|the) (?:document|entire text|text) (?:is|contains) a mix of [^.\n]*\bcontent\b/, label: 'mix' },
+	{ re: /^We (?:believe|are confident) (?:that )?(?:this|the) (?:document|entire text|text) is (?:mainly|primarily|mostly|largely) [^.\n]*\bwith (?:some|a) [^.\n]*\bcontent(?: detected)?\b/, label: 'mix' },
 	{ re: /^We (?:believe|are confident) that this (?:document|entire text|text) is (?:fully )?AI(?:-generated)?\.?(?:\s|$)/, label: 'ai' },
 	{ re: /^We (?:believe|are confident) that this (?:document|entire text|text) is (?:fully )?human-written\b/, label: 'human' },
 	{ re: /^No AI Detected\b/, label: 'human' },

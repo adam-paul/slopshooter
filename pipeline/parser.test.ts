@@ -132,7 +132,10 @@ describe('legacy templates (Feb–Jul 2026)', () => {
 			'We believe that this document is primarily AI-generated with some human-written content',
 			'We believe that this document is primarily human-written, with some AI-generated content detected',
 			'We believe that the document contains a mix of AI-assisted and human-written content',
-			'We believe that this document is mainly AI-generated, with some AI-assisted content.'
+			'We believe that this document is mainly AI-generated, with some AI-assisted content.',
+			'We are confident that this document is a mix of AI-generated, and human-written content',
+			'We are confident that this document is primarily AI-generated with some human-written content',
+			'We believe that this document is primarily human-written, with a small amount of AI content detected'
 		]) {
 			const r = parseVerdictReply(`@a ${s} https://t.co/x`, [HISTORY_URL]);
 			expect(r.kind).toBe('verdict');
