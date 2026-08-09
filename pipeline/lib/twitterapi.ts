@@ -29,12 +29,28 @@ export class TwitterApiClient {
 			if (wait > 0) await sleep(wait);
 			this.lastRequestAt = Date.now();
 
-			const res = await fetch(url, { headers: { 'X-API-Key': this.apiKey } });
+			let res: Response;
+			try {
+				res = await fetch(url, { headers: { 'X-API-Key': this.apiKey } });
+			} catch (err) {
+				// Network hiccup — transient by definition on a long backfill.
+				if (attempt <= 5) {
+					await sleep(2000 * attempt);
+					continue;
+				}
+				throw err;
+			}
 			if (res.status === 429 && attempt <= 5) {
 				// Free-tier accounts allow one request per 5s; adopt that pace for the
 				// rest of the run instead of failing. Paid tiers never hit this.
 				await res.body?.cancel();
 				this.minIntervalMs = Math.max(this.minIntervalMs, 5500);
+				continue;
+			}
+			if (res.status >= 500 && attempt <= 5) {
+				// Transient server error — retry with backoff instead of killing the run.
+				await res.body?.cancel();
+				await sleep(2000 * attempt);
 				continue;
 			}
 			if (!res.ok) {
@@ -66,15 +82,24 @@ export class TwitterApiClient {
 		return { tweets: raw.map(normalizeTweet), nextCursor: next ? String(next) : null };
 	}
 
-	/** Batch tweet hydration by id (chunks of 100). */
+	/**
+	 * Batch tweet hydration by id (chunks of 100). Hydration is ENRICHMENT —
+	 * tagger attribution lives on the verdict tweet itself — so a chunk that
+	 * still fails after retries is logged and skipped, never fatal.
+	 */
 	async tweetsByIds(ids: string[]): Promise<NormalizedTweet[]> {
 		const out: NormalizedTweet[] = [];
 		for (let i = 0; i < ids.length; i += 100) {
-			const json = await this.get('/twitter/tweets', {
-				tweet_ids: ids.slice(i, i + 100).join(',')
-			});
-			const raw: any[] = json?.tweets ?? json?.data?.tweets ?? [];
-			out.push(...raw.map(normalizeTweet));
+			const chunk = ids.slice(i, i + 100);
+			try {
+				const json = await this.get('/twitter/tweets', { tweet_ids: chunk.join(',') });
+				const raw: any[] = json?.tweets ?? json?.data?.tweets ?? [];
+				out.push(...raw.map(normalizeTweet));
+			} catch (err) {
+				console.log(
+					`::warning title=Hydration chunk skipped::${chunk.length} tweet(s) could not be hydrated (${err instanceof Error ? err.message.slice(0, 200) : err}); affected rows will lack summons/checked-post enrichment.`
+				);
+			}
 		}
 		return out;
 	}
