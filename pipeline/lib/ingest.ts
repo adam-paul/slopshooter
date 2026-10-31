@@ -157,6 +157,8 @@ export async function hydrateAndResolve(
 /**
  * Upsert rows, chunked under D1's bound-parameter cap. Re-fetched rows repair
  * any missing enrichment (COALESCE), so the count covers inserts and repairs.
+ * Every row either inserts or takes the DO UPDATE, so the count is the row count;
+ * D1's meta.changes would also count the stats triggers' writes.
  */
 export async function writeVerdicts(
 	d1: D1HttpClient,
@@ -169,7 +171,7 @@ export async function writeVerdicts(
 	let upserted = 0;
 	for (let i = 0; i < rows.length; i += CHUNK) {
 		const chunk = rows.slice(i, i + CHUNK);
-		const { meta } = await d1.queryWithMeta(
+		await d1.query(
 			`INSERT INTO verdicts (${colNames}) VALUES ${chunk.map(() => rowSql).join(', ')}
 			 ON CONFLICT(verdict_tweet_id) DO UPDATE SET
 				summons_id = COALESCE(excluded.summons_id, summons_id),
@@ -180,7 +182,7 @@ export async function writeVerdicts(
 				tagger_handle = COALESCE(excluded.tagger_handle, tagger_handle)`,
 			chunk.flatMap((r) => VERDICT_COLUMNS.map(([, extract]) => extract(r, now)))
 		);
-		upserted += meta?.changes ?? chunk.length;
+		upserted += chunk.length;
 	}
 	return upserted;
 }

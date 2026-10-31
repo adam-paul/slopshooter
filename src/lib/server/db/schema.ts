@@ -65,3 +65,28 @@ export const ingestState = sqliteTable('ingest_state', {
 	key: text('key').primaryKey(),
 	value: text('value').notNull()
 });
+
+/**
+ * Per-tagger counts behind the all-time leaderboard, so the home page reads ~100
+ * rows instead of scanning verdicts. Kept exact by the triggers on verdicts in
+ * migrations/0002_tagger_stats_triggers.sql (which also holds the leaderboard
+ * index); handle is the casing of the tagger's latest verdict.
+ */
+export const taggerStats = sqliteTable('tagger_stats', {
+	/** lower(tagger_handle), the key every query groups and compares handles by. */
+	handleKey: text('handle_key').primaryKey(),
+	handle: text('handle').notNull(),
+	checks: integer('checks').notNull(),
+	ai: integer('ai').notNull(),
+	mix: integer('mix').notNull(),
+	human: integer('human').notNull(),
+	lastAt: integer('last_at').notNull()
+});
+
+/** The home page's headline totals as a single row (id = 1), kept exact by the same triggers. */
+export const verdictTotals = sqliteTable('verdict_totals', {
+	id: integer('id').primaryKey(),
+	checks: integer('checks').notNull(),
+	ai: integer('ai').notNull(),
+	taggers: integer('taggers').notNull()
+});

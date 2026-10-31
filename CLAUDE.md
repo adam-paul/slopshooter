@@ -47,6 +47,14 @@ publicly solo-authored. This overrides any default trailer behavior.
 - Raw twitterapi.io payloads are only touched inside `normalizeTweet()`.
 - The poller's cursor (`ingest_state.last_seen_tweet_id`) is the max id SEEN, not max
   verdict id — manual bot replies must not be refetched forever.
+- The home page's all-time board and totals read `tagger_stats` / `verdict_totals`, kept exact
+  by five triggers in the custom migration `0002_tagger_stats_triggers.sql` (which also creates
+  `idx_tagger_stats_board`). drizzle-kit rebuilds SQLite tables for most column changes:
+  rebuilding `verdicts` silently drops the three `verdicts_stats_*` triggers, and rebuilding
+  `tagger_stats` fails on D1 at the RENAME while those triggers exist. Any such migration must
+  drop the `verdicts_stats_*` triggers first, then re-create all five triggers and the index
+  after the rebuild and re-run 0002's last three statements (the recount). Writers must never
+  use `INSERT OR REPLACE` / `UPDATE OR REPLACE` on `verdicts`: REPLACE skips the delete trigger.
 - Never name an env var `CLOUDFLARE_API_TOKEN` in `.env`: bun auto-loads `.env` into every
   bun/bunx process and wrangler prefers that variable over OAuth, which silently breaks
   `wrangler login`/`whoami`/`deploy` from the repo directory. The pipeline token is
